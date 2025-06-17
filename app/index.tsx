@@ -1,15 +1,14 @@
-import { Text, View } from "react-native";
+import { useThemeColor } from "@/hooks/useThemeStyle";
+import { ScrollView, Text, View } from "react-native";
 
 export default function Index() {
+  const styleSheet = useThemeColor();
+
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </View>
+    <ScrollView style={styleSheet.view}>
+      <View style={styleSheet.container}>
+        <Text style={styleSheet.text}>Edit app/index.tsx to edit this screen.</Text>
+      </View>
+    </ScrollView>
   );
 }
