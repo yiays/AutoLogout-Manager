@@ -39,6 +39,12 @@ export function baseStyles(theme: 'light'|'dark') {
     text: {
       color: Colors[theme].text,
     },
+    label: {
+      color: Colors[theme].tint,
+      fontSize: 10,
+      textTransform: 'uppercase',
+      fontWeight: 'bold',
+    },
     paragraph: {
       color: Colors[theme].text,
       marginVertical: 8,
@@ -48,6 +54,19 @@ export function baseStyles(theme: 'light'|'dark') {
       marginVertical: 8,
       maxWidth: '80%',
       textAlign: 'center',
+    },
+    textInput: {
+      color: Colors[theme].text,
+      borderWidth: 1,
+      borderColor: Colors[theme].text,
+      marginBlockStart: 4,
+      marginBlockEnd: 12,
+    },
+    validationNote: {
+      color: Colors[theme].danger,
+      fontSize: 11,
+      marginTop: -8,
+      marginBottom: 8,
     },
     separator: {
       height: 1,
