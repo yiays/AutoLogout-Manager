@@ -4,14 +4,14 @@ import Colors from "./Colors";
 export function baseStyles(theme: 'light'|'dark') {
   return StyleSheet.create({
     header: {
-      backgroundColor: Colors[theme].bg,
+      backgroundColor: Colors[theme].background,
       color: Colors[theme].text,
     },
     headerTitle: {
       color: Colors[theme].text,
     },
     view: {
-      backgroundColor: Colors[theme].bg,
+      backgroundColor: Colors[theme].background,
     },
     container: {
       padding: 30,
@@ -74,7 +74,8 @@ export function baseStyles(theme: 'light'|'dark') {
       marginBottom: 16,
       borderRadius: 4,
       elevation: 3,
-      backgroundColor: Colors[theme].bg,
+      backgroundColor: Colors[theme].background,
+      color: 'white'
     },
     buttonText: {
       color: 'white'
