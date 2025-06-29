@@ -10,7 +10,7 @@ export default function RootLayout() {
   function accountButton(value:[string, Account]) {
     const [uuid, account] = value;
     return (
-      <Link style={styleSheet.button} href={{pathname: '/[uuid]', params: {uuid: uuid}}} >
+      <Link key={uuid} style={styleSheet.button} href={{pathname: '/[uuid]', params: {uuid: uuid}}} >
         <Text style={styleSheet.buttonText}>{account.name}</Text>
       </Link>
     )

@@ -11,7 +11,7 @@ export default function Index() {
   function renderAccount(value:[string, Account]) {
     const [uuid, account] = value;
     return (
-      <Text style={styleSheet.title}>{account.name}</Text>
+      <Text key={uuid} style={styleSheet.title}>{account.name}</Text>
     )
   }
   
