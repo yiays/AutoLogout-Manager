@@ -1,4 +1,4 @@
-import { Accounts, ClientState, getAccounts, getClientState } from "@/services/syncService";
+import { Accounts, authorizeNewClient, ClientState, getAccounts, getClientState } from "@/services/syncService";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 type States = {
@@ -7,7 +7,8 @@ type States = {
 
 type AccountsContextType = {
   accounts: Accounts;
-  states: States
+  states: States;
+  addAccount: (uuid: string, name: string, password: string) => Promise<ClientState | null>;
 };
 
 const AccountsContext = createContext<AccountsContextType | undefined>(undefined);
@@ -22,15 +23,30 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     Object.entries(data).forEach(async ([uuid, account]) => {
       const newState = await getClientState(uuid, account.authKey);
       if (newState) setStates({...states, newState});
+      else {
+        console.warn("Resetting accounts state as an account was not found.");
+        const data = await getAccounts();
+        setAccounts(data);
+      }
     });
   };
+
+  const addAccount = async(uuid: string, name: string, password: string) => {
+    const result = await authorizeNewClient(uuid, name, password);
+    if(result) {
+      setAccounts(await getAccounts());
+      setStates(prev => ({ ...prev, [uuid]: result }));
+      return result;
+    }
+    return null;
+  }
 
   useEffect(() => {
     refreshAccounts();
   }, []);
 
   return (
-    <AccountsContext.Provider value={{ accounts, states }}>
+    <AccountsContext.Provider value={{ accounts, states, addAccount }}>
       {children}
     </AccountsContext.Provider>
   );

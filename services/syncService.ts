@@ -1,5 +1,7 @@
-import { DefaultService, OpenAPI } from "@/api-client";
+import { ApiError, DefaultService, OpenAPI } from "@/api-client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+OpenAPI.BASE = 'https://timelimit.yiays.com';
 
 export type Account = {
   name: string;
@@ -55,28 +57,62 @@ export async function removeClientState(uuid:string) {
 // Fetch state from server and save locally
 export async function getClientState(uuid: string, token: string): Promise<ClientState | null> {
   OpenAPI.TOKEN = token;
-  const response = await DefaultService.getStateFetch(uuid);
-  if (response) {
-    await saveClientState(uuid, response);
-    return response;
+  try {
+    const response = await DefaultService.getStateFetch(uuid);
+    console.log("Fetch response:", response);
+    if (response) {
+      await saveClientState(uuid, response);
+      return response;
+    }
+  } catch (error) {
+    if(error instanceof ApiError) {
+      if([404, 401].includes(error.status)) {
+        console.error("UUID was removed or unauthorized:", uuid);
+        removeClientState(uuid);
+      }else{
+        console.error("Unhandled API error:", error.status, error.body);
+      }
+    }
   }
   return null;
 }
 
 export async function setClientState(uuid: string, state:ClientState, token:string): Promise<void> {
   OpenAPI.TOKEN = token;
-  const response = await DefaultService.postStateSync(uuid, true, state);
-  if (response.accepted) {
-    await saveClientState(uuid, {...state, ...response.delta});
+  try {
+    const response = await DefaultService.postStateSync(uuid, true, state);
+    if (response.accepted) {
+      await saveClientState(uuid, {...state, ...response.delta});
+    }
+  } catch (error) {
+    if(error instanceof ApiError) {
+      if([404, 401].includes(error.status)) {
+        console.error("UUID was removed or unauthorized:", uuid);
+        removeClientState(uuid);
+      }else{
+        console.error("Unhandled API error:", error.status, error.body);
+      }
+    } else {
+      console.error("Failed to set client state:", error);
+    }
   }
 }
 
 export async function authorizeNewClient(uuid:string, name:string, password:string): Promise<ClientState | null> {
   OpenAPI.TOKEN = undefined;
-  const response = await DefaultService.getClientAuthorize(uuid, password);
-  if(response.success) {
-    await createClientState(uuid, name, response.authKey);
-    return await getClientState(uuid, response.authKey);
+  try {
+    const response = await DefaultService.getClientAuthorize(uuid, password);
+    console.log("Authorize response:", response);
+    if(response.success) {
+      await createClientState(uuid, name, response.authKey);
+      return await getClientState(uuid, response.authKey);
+    }
+  } catch (error) {
+    if(error instanceof ApiError) {
+      console.error("Unhandled API error:", error.status, error.body);
+    } else {
+      console.error("Failed to set client state:", error);
+    }
   }
   return null;
 }

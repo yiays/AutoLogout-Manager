@@ -41,7 +41,7 @@ export function baseStyles(theme: 'light'|'dark') {
     },
     label: {
       color: Colors[theme].tint,
-      fontSize: 10,
+      fontSize: 11,
       textTransform: 'uppercase',
       fontWeight: 'bold',
     },
@@ -56,6 +56,7 @@ export function baseStyles(theme: 'light'|'dark') {
       textAlign: 'center',
     },
     textInput: {
+      fontSize: 24,
       color: Colors[theme].text,
       borderWidth: 1,
       borderColor: Colors[theme].text,
@@ -64,8 +65,13 @@ export function baseStyles(theme: 'light'|'dark') {
     },
     validationNote: {
       color: Colors[theme].danger,
-      fontSize: 11,
+      fontSize: 12,
       marginTop: -8,
+      marginBottom: 8,
+    },
+    errorNote: {
+      color: Colors[theme].danger,
+      fontSize: 12,
       marginBottom: 8,
     },
     separator: {
