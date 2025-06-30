@@ -10,7 +10,7 @@ export default function() {
   const styleSheet = useThemeColor();
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { accounts, addAccount } = useAccounts();
+  const { accounts, authorizeClient } = useAccounts();
 
   const allNames = Object.values(accounts).map(account => account.name);
 
@@ -93,7 +93,7 @@ export default function() {
       return;
     }
 
-    const result = await addAccount(uuid, name, password);
+    const result = await authorizeClient(uuid, name, password);
     if (result) {
       console.log("Account created with", { name, uuid, password });
 
