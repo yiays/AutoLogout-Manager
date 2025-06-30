@@ -7,9 +7,6 @@ export function baseStyles(theme: 'light'|'dark') {
       backgroundColor: Colors[theme].background,
       color: Colors[theme].text,
     },
-    headerTitle: {
-      color: Colors[theme].text,
-    },
     view: {
       backgroundColor: Colors[theme].background,
     },
@@ -20,7 +17,6 @@ export function baseStyles(theme: 'light'|'dark') {
       color: Colors[theme].text,
       fontSize: 28,
       fontWeight: 'bold',
-      marginTop: 14,
       marginBottom: 8,
     },
     smallTitle: {
@@ -105,5 +101,8 @@ export function baseStyles(theme: 'light'|'dark') {
     buttonText: {
       color: 'white'
     },
+    tint: {
+      color: Colors[theme].tint,
+    }
   });
 }

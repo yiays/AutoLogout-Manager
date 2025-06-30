@@ -1,46 +1,58 @@
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { AccountsProvider, useAccounts } from "@/providers/AccountsProvider";
-import { Account } from "@/services/syncService";
-import { Link, Stack } from "expo-router";
-import { Text, View } from "react-native";
+import { DrawerContentComponentProps, DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
+import { router } from "expo-router";
+import { Drawer } from "expo-router/drawer";
+
+function DrawerContent(props: DrawerContentComponentProps /*& { activeTintColor: string, inactiveTintColor: string }*/) {
+  const {accounts} = useAccounts();
+  const activeRoute = props.state.routes[props.state.index];
+  const activeTintColor = props.activeTintColor ?? "#2196f3";
+  const inactiveTintColor = props.inactiveTintColor ?? "#222";
+  
+  return (
+    <DrawerContentScrollView>
+      <DrawerItem
+        label="About"
+        focused={activeRoute.name=='index'}
+        labelStyle={{ color: activeRoute.name === "index" ? activeTintColor : inactiveTintColor }}
+        onPress={() => router.push("/")}
+      />
+      {
+        Object.entries(accounts).map(([uuid, account]) => {
+          const focused = activeRoute.name === "[uuid]" && activeRoute.params?.uuid === uuid;
+          return <DrawerItem
+            key={uuid}
+            label={account.name}
+            focused={focused}
+            labelStyle={{ color: focused ? activeTintColor : inactiveTintColor }}
+            onPress={() => router.push({pathname: "/[uuid]", params:{uuid}})}
+          />;
+        })
+      }
+      <DrawerItem
+        label="Add an account"
+        focused={activeRoute.name=='addAccount'}
+        labelStyle={{ color: activeRoute.name=="addAccount" ? activeTintColor : inactiveTintColor }}
+        onPress={() => router.push("/addAccount")}
+      />
+    </DrawerContentScrollView>
+  );
+}
 
 export default function RootLayout() {
   const styleSheet = useThemeColor();
 
-  function accountButton(value:[string, Account]) {
-    const [uuid, account] = value;
-    return (
-      <Link key={uuid} style={styleSheet.button} href={{pathname: '/[uuid]', params: {uuid: uuid}}} >
-        <Text style={styleSheet.buttonText}>{account.name}</Text>
-      </Link>
-    )
-  }
-
-  function accountSwitcher() {
-    const {accounts} = useAccounts();
-
-    return (
-      <View style={{ paddingHorizontal: 10 }}>
-        {Object.entries(accounts).map(accountButton)}
-        <Link style={styleSheet.button} href={'/addAccount'}>
-          <Text style={styleSheet.buttonText} accessibilityLabel="Add account">+</Text>
-        </Link>
-      </View>
-    );
-  }
-
   return (
     <AccountsProvider>
-      <Stack screenOptions={{
-        headerLeft: accountSwitcher,
+      <Drawer drawerContent={DrawerContent} screenOptions={{
         headerStyle: styleSheet.header,
         headerTintColor: styleSheet.header.color,
-        headerTitleStyle: styleSheet.headerTitle
+        drawerStyle: styleSheet.view,
       }}>
-        <Stack.Screen name="index" options={{title: "AutoLogout Manager"}}/>
-        <Stack.Screen name="[uuid]" options={{}}/>
-        <Stack.Screen name="addAccount" options={{title: "Add an account", presentation:'card'}}/>
-      </Stack>
+        <Drawer.Screen name="index" options={{title: "About"}}/>
+        <Drawer.Screen name="addAccount" options={{title: "Add an account"}}/>
+      </Drawer>
     </AccountsProvider>
   );
 }
