@@ -40,7 +40,7 @@ type AccountsContextType = {
   authorizeClient: (uuid: string, name: string, password: string) => Promise<ClientState | null>;
 };
 
-OpenAPI.BASE = 'https://timelimit.yiays.com';
+OpenAPI.BASE = 'https://autologout.yiays.com';
 const AccountsContext = createContext<AccountsContextType | undefined>(undefined);
 
 export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
