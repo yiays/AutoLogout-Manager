@@ -52,7 +52,7 @@ export function baseStyles(theme: 'light'|'dark') {
       textAlign: 'center',
     },
     textInput: {
-      fontSize: 24,
+      fontSize: 18,
       color: Colors[theme].text,
       borderWidth: 1,
       borderColor: Colors[theme].text,

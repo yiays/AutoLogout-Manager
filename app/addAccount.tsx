@@ -4,8 +4,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Button, ScrollView, Text, TextInput, View } from "react-native";
 
-const prefilledParams: {name?: string, uuid?: string, password?: string} = {};
-
 export default function() {
   const styleSheet = useThemeColor();
   const router = useRouter();
@@ -25,41 +23,14 @@ export default function() {
   
   useEffect(() => {
     // Restore pre-filled values after clearing the params
-    if(params.name || params.uuid || params.password) return;
-    
-      if (prefilledParams.name) {
-      validateName(prefilledParams.name);
-      prefilledParams.name = undefined;
+    if (typeof params.name == 'string') {
+      validateName(params.name);
     }
-    if (prefilledParams.uuid) {
-      validateUuid(prefilledParams.uuid);
-      prefilledParams.uuid = undefined;
+    if (typeof params.uuid == 'string') {
+      validateUuid(params.uuid);
     }
-    if (prefilledParams.password) {
-      validatePassword(prefilledParams.password);
-      prefilledParams.password = undefined;
-    }
-  }, [router]);
-
-  useEffect(() => {
-    // Pre-fill fields if query params exist
-    if(!Object.keys(prefilledParams).length) {
-      let didApply = false;
-      if (params.name && typeof params.name === "string") {
-        prefilledParams.name = params.name;
-        didApply = true;
-      }
-      if (params.uuid && typeof params.uuid === "string") {
-        prefilledParams.uuid = params.uuid;
-        didApply = true;
-      }
-      if (params.password && typeof params.password === "string") {
-        prefilledParams.password = params.password;
-        didApply = true;
-      }
-      
-      // Avoid re-applying params on back navigation
-      if(didApply) setTimeout(() => router.replace('/addAccount'), 0);
+    if (typeof params.password == 'string') {
+      validatePassword(params.password);
     }
   }, [params]);
 
@@ -96,8 +67,7 @@ export default function() {
     const result = await authorizeClient(uuid, name, password);
     if (result) {
       console.log("Account created with", { name, uuid, password });
-
-      // Reset fields after submission
+      router.replace({ pathname: "/[uuid]", params: { uuid } });
     } else {
       setSubmitError("Failed to add account. Double-check your internet connection and try again.");
     }
@@ -106,20 +76,30 @@ export default function() {
   return (
     <ScrollView style={styleSheet.view}>
       <View style={styleSheet.container}>
-        <Text style={styleSheet.label}>Account name:</Text>
-        <TextInput style={styleSheet.textInput} value={name} onChangeText={validateName} textContentType="none" maxLength={50}></TextInput>
-        { nameError && <Text style={styleSheet.validationNote}>{nameError}</Text> }
+        {
+        !params.uuid?<>
+          <Text style={styleSheet.title}>How to add accounts</Text>
+          <Text style={styleSheet.paragraph}>
+            Open the control panel in AutoLogout, then click the "Connect to your phone" button.
+            Scan the resulting QR code with your camera app.
+          </Text>
+        </>:<>
+          <Text style={styleSheet.label}>Account name:</Text>
+          <TextInput style={styleSheet.textInput} value={name} readOnly={Boolean(params.name)} onChangeText={validateName} textContentType="none" maxLength={50}></TextInput>
+          { nameError && <Text style={styleSheet.validationNote}>{nameError}</Text> }
 
-        <Text style={styleSheet.label}>Account UUID:</Text>
-        <TextInput style={styleSheet.textInput} value={uuid} onChangeText={validateUuid} textContentType="none" maxLength={37}></TextInput>
-        { uuidError && <Text style={styleSheet.validationNote}>{uuidError}</Text> }
+          <Text style={styleSheet.label}>Account UUID:</Text>
+          <TextInput style={styleSheet.textInput} value={uuid} readOnly={true} onChangeText={validateUuid} textContentType="none" maxLength={37}></TextInput>
+          { uuidError && <Text style={styleSheet.validationNote}>{uuidError}</Text> }
 
-        <Text style={styleSheet.label}>Parent password:</Text>
-        <TextInput style={styleSheet.textInput} value={password} onChangeText={validatePassword} textContentType="none" secureTextEntry={true} maxLength={40}></TextInput>
-        { passwordError && <Text style={styleSheet.validationNote}>{passwordError}</Text> }
-        
-        <Button title="Add account" onPress={handleSubmit}/>
-        { submitError && <Text style={styleSheet.errorNote}>{submitError}</Text> }
+          <Text style={styleSheet.label}>Parent password:</Text>
+          <TextInput style={styleSheet.textInput} value={password} readOnly={Boolean(params.password)} onChangeText={validatePassword} textContentType="none" secureTextEntry={true} maxLength={40}></TextInput>
+          { passwordError && <Text style={styleSheet.validationNote}>{passwordError}</Text> }
+          
+          <Button title="Add account" onPress={handleSubmit}/>
+          { submitError && <Text style={styleSheet.errorNote}>{submitError}</Text> }
+        </>
+        }
       </View>
     </ScrollView>
   );
