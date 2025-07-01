@@ -45,11 +45,14 @@ export default function RootLayout() {
 
   return (
     <AccountsProvider>
-      <Drawer drawerContent={DrawerContent} screenOptions={{
-        headerStyle: styleSheet.header,
-        headerTintColor: styleSheet.header.color,
-        drawerStyle: styleSheet.view,
-      }}>
+      <Drawer
+        drawerContent={DrawerContent}
+        screenOptions={{
+          headerStyle: styleSheet.header,
+          headerTintColor: styleSheet.header.color,
+          drawerStyle: styleSheet.view,
+        }}
+      >
         <Drawer.Screen name="index" options={{title: "About"}}/>
         <Drawer.Screen name="addAccount" options={{title: "Add an account"}}/>
       </Drawer>
