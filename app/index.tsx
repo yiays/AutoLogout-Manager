@@ -1,7 +1,7 @@
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { useAccounts } from "@/providers/AccountsProvider";
 import { Link } from "expo-router";
-import { Button, ScrollView, Text, View } from "react-native";
+import { Button, Linking, Platform, ScrollView, Text, View } from "react-native";
 
 export default function Index() {
   const styleSheet = useThemeColor();
@@ -16,7 +16,7 @@ export default function Index() {
           This is a companion app to the Windows app known as AutoLogout.
         </Text>
         <Link style={styleSheet.paragraph} href="https://github.com/yiays/AutoLogout?tab=readme-ov-file#autologout" target="_blank">
-          <Button title="AutoLogout for Windows"/>
+          <Button title="AutoLogout for Windows" onPress={() => Platform.OS != 'web' ? Linking.openURL("https://github.com/yiays/AutoLogout?tab=readme-ov-file#autologout"): null}/>
         </Link>
         { accounts && Object.keys(accounts).length?
           <>
