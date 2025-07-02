@@ -20,7 +20,12 @@ function DrawerContent(props: DrawerContentComponentProps /*& { activeTintColor:
       />
       {
         Object.entries(accounts).map(([uuid, account]) => {
-          const focused = activeRoute.name === "[uuid]" && activeRoute.params?.uuid === uuid;
+          const focused = (
+            activeRoute.name === "[uuid]"
+            && activeRoute.params
+            && 'uuid' in activeRoute.params
+            && activeRoute.params?.uuid === uuid
+          );
           return <DrawerItem
             key={uuid}
             label={account.name}

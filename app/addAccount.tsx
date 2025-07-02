@@ -11,6 +11,7 @@ export default function() {
   const { accounts, authorizeClient } = useAccounts();
 
   const allNames = Object.values(accounts).map(account => account.name);
+  const allUuids = Object.keys(accounts);
 
   const [name, setName] = useState("");
   const [uuid, setUuid] = useState("");
@@ -37,23 +38,35 @@ export default function() {
   // Validation functions
   function validateName(text: string) {
     setName(text);
-    setNameError(allNames.includes(text) ? "Name must be unique." : text.length < 3 ? "Name must be at least 3 characters long." : null);
+    setNameError(
+      allNames.includes(text) ? "Name must be unique."
+      : text.length < 3 ? "Name must be at least 3 characters long."
+      : null
+    );
   }
 
   function validateUuid(text: string) {
     setUuid(text);
-    setUuidError(!/^[0-9a-fA-F-]{36,37}$/.test(text) ? "Invalid UUID format." : null);
+    setUuidError(
+      allUuids.includes(text) ? "This account has already been added."
+      : !/^[0-9a-fA-F-]{36,37}$/.test(text) ? "Invalid UUID format."
+      : null
+    );
   }
 
   function validatePassword(text: string) {
     setPassword(text);
-    setPasswordError(text.length < 1 ? "You must provide the parent password." : null);
+    setPasswordError(
+      text.length < 1 ? "You must provide the parent password."
+      : null
+    );
   }
 
   async function handleSubmit() {
     setSubmitError(null);
     if (nameError || uuidError || passwordError) {
       // If there are validation errors, do not submit
+      setSubmitError("A required parameter is invalid. Please correct any issues.");
       return;
     }
     if( !name || !uuid || !password) {
@@ -61,6 +74,8 @@ export default function() {
       setNameError(!name ? "Account name is required." : null);
       setUuidError(!uuid ? "Account UUID is required." : null);
       setPasswordError(!password ? "Parent password is required." : null);
+
+      setSubmitError("A required parameter is empty. Please fill in all fields.");
       return;
     }
 
@@ -93,6 +108,7 @@ export default function() {
           { uuidError && <Text style={styleSheet.validationNote}>{uuidError}</Text> }
 
           <Text style={styleSheet.label}>Parent password:</Text>
+          <Text style={styleSheet.note}>This is the password you entered when opening AutoLogout on this account for the first time.</Text>
           <TextInput style={styleSheet.textInput} value={password} readOnly={Boolean(params.password)} onChangeText={validatePassword} textContentType="none" secureTextEntry={true} maxLength={40}></TextInput>
           { passwordError && <Text style={styleSheet.validationNote}>{passwordError}</Text> }
           

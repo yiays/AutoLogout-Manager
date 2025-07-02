@@ -48,8 +48,7 @@ export function baseStyles(theme: 'light'|'dark') {
     note: {
       color: Colors[theme].text,
       marginVertical: 8,
-      maxWidth: '80%',
-      textAlign: 'center',
+      fontStyle: 'italic',
     },
     textInput: {
       fontSize: 18,
