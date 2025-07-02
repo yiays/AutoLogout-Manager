@@ -5,7 +5,6 @@ export function baseStyles(theme: 'light'|'dark') {
   return StyleSheet.create({
     header: {
       backgroundColor: Colors[theme].background,
-      color: Colors[theme].text,
     },
     view: {
       backgroundColor: Colors[theme].background,
@@ -40,6 +39,11 @@ export function baseStyles(theme: 'light'|'dark') {
       fontSize: 11,
       textTransform: 'uppercase',
       fontWeight: 'bold',
+    },
+    spanImage: {
+      width: '100%',
+      maxHeight: 500,
+      resizeMode: 'contain',
     },
     paragraph: {
       color: Colors[theme].text,

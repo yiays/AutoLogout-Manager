@@ -1,5 +1,6 @@
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { useAccounts } from "@/providers/AccountsProvider";
+import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Button, ScrollView, Text, TextInput, View } from "react-native";
@@ -96,8 +97,12 @@ export default function() {
           <Text style={styleSheet.title}>How to add accounts</Text>
           <Text style={styleSheet.paragraph}>
             Open the control panel in AutoLogout, then click the "Connect to your phone" button.
-            Scan the resulting QR code with your camera app.
+            Scan the resulting QR code with your camera app or Google Lens.
           </Text>
+          <Image
+            style={{...styleSheet.spanImage, aspectRatio:0.883, maxHeight: 800}}
+            source={require('@/assets/images/Connect to your phone.png')}
+          />
         </>:<>
           <Text style={styleSheet.label}>Account name:</Text>
           <TextInput style={styleSheet.textInput} value={name} readOnly={Boolean(params.name)} onChangeText={validateName} textContentType="none" maxLength={50}></TextInput>
