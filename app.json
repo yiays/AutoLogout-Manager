@@ -13,8 +13,9 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/adaptive-icon-fg.png",
+        "monochromeImage": "./assets/images/adaptive-icon-fg-mono.png",
+        "backgroundImage": "./assets/images/adaptive-icon-bg.png"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.yiays.autologoutmanager",
@@ -47,7 +48,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#999bd0"
         }
       ],
       "expo-web-browser"
