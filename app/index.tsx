@@ -1,5 +1,6 @@
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { useAccounts } from "@/providers/AccountsProvider";
+import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { Button, Linking, Platform, ScrollView, Text, View } from "react-native";
 
@@ -10,6 +11,10 @@ export default function Index() {
   return (
     <ScrollView style={styleSheet.view}>
       <View style={styleSheet.container}>
+        <Image
+          style={{...styleSheet.spanImage, aspectRatio:2.048, marginTop: -12}}
+          source={require('@/assets/images/feature-graphic.png')}
+        />
         <Text style={styleSheet.title}>Welcome to AutoLogout Manager</Text>
         <Text style={styleSheet.paragraph}>
           Remotely manage time limits and bedtime on Windows computers you manage.
