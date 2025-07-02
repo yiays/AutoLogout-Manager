@@ -1,14 +1,17 @@
+import Colors from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { AccountsProvider, useAccounts } from "@/providers/AccountsProvider";
 import { DrawerContentComponentProps, DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { router } from "expo-router";
 import { Drawer } from "expo-router/drawer";
+import { StatusBar } from "expo-status-bar";
 
-function DrawerContent(props: DrawerContentComponentProps /*& { activeTintColor: string, inactiveTintColor: string }*/) {
+function DrawerContent(props: DrawerContentComponentProps & { activeTintColor: string, inactiveTintColor: string }) {
   const {accounts} = useAccounts();
   const activeRoute = props.state.routes[props.state.index];
-  const activeTintColor = props.activeTintColor ?? "#2196f3";
-  const inactiveTintColor = props.inactiveTintColor ?? "#222";
+  const activeTintColor = props.activeTintColor;
+  const inactiveTintColor = props.inactiveTintColor;
   
   return (
     <DrawerContentScrollView>
@@ -47,14 +50,16 @@ function DrawerContent(props: DrawerContentComponentProps /*& { activeTintColor:
 
 export default function RootLayout() {
   const styleSheet = useThemeColor();
+  const colorScheme = useColorScheme() == 'light'? 'light': 'dark';
 
   return (
     <AccountsProvider>
+      <StatusBar style={colorScheme == 'dark'? 'light': 'dark'}/>
       <Drawer
-        drawerContent={DrawerContent}
+        drawerContent={(props) => DrawerContent({...props, activeTintColor: Colors[colorScheme].tint, inactiveTintColor: Colors[colorScheme].inactive})}
         screenOptions={{
           headerStyle: styleSheet.header,
-          headerTintColor: styleSheet.header.color,
+          headerTintColor: Colors[colorScheme].text,
           drawerStyle: styleSheet.view,
         }}
       >
