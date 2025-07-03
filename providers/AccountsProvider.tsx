@@ -1,6 +1,6 @@
 import { ApiError, DefaultService, OpenAPI } from "@/api-client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 
 enum NetworkState {
   NetworkError = -2,
@@ -46,6 +46,7 @@ const AccountsContext = createContext<AccountsContextType | undefined>(undefined
 export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [accounts, setAccounts] = useState<Accounts>({});
   const [states, setStates] = useState<States>({});
+  const fetchOnce = useRef(false);
 
   const loadAccounts = async(coldstart: boolean = false): Promise<Accounts> => {
     const rawAccounts = await AsyncStorage.getItem('accounts');
@@ -54,6 +55,7 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Accounts have not synced yet, reflect that in state
       for (const uuid in newAccounts) {
         newAccounts[uuid].state = NetworkState.Unknown;
+        await loadClientState(uuid);
       }
     }
     setAccounts(newAccounts);
@@ -105,11 +107,10 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }
 
   // Fetch state from server and save locally
-  const getClientState = async(uuid: string, token: string): Promise<ClientState | null> => {
+  const fetchClientState = async(uuid: string, token: string): Promise<ClientState | null> => {
     OpenAPI.TOKEN = token;
     try {
       const response = await DefaultService.getStateFetch(uuid);
-      console.log("Fetch response:", response);
       if (response) {
         await saveClientState(uuid, response);
         await setAccountState(uuid, NetworkState.Active);
@@ -124,28 +125,43 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           console.error("Unhandled API error:", error.status, error.body);
           await setAccountState(uuid, NetworkState.NetworkError);
         }
+      } else {
+        console.error("Failed to fetch client state:", error);
+        await setAccountState(uuid, NetworkState.NetworkError);
       }
     }
     return null;
   }
 
-  const setClientState = async(uuid: string, state:ClientState, token:string): Promise<void> => {
+  const fetchClients = () => {
+    console.log("Fetching client states for all accounts...");
+    for (const [uuid, account] of Object.entries(accounts)) {
+      fetchClientState(uuid, account.authKey).then(newState => {
+        if (newState) setStates(prev => ({...prev, [uuid]: newState}));
+      });
+    };
+  }
+
+  const pushClientState = async(uuid: string, state:ClientState, token:string): Promise<void> => {
     OpenAPI.TOKEN = token;
     try {
       const response = await DefaultService.postStateSync(uuid, true, state);
       if (response.accepted) {
         await saveClientState(uuid, {...state, ...response.delta});
+        await setAccountState(uuid, NetworkState.Active);
       }
     } catch (error) {
       if(error instanceof ApiError) {
         if([404, 401].includes(error.status)) {
           console.error("UUID was removed or unauthorized:", uuid);
-          removeClientState(uuid);
+          await setAccountState(uuid, NetworkState.Unauthorized);
         }else{
           console.error("Unhandled API error:", error.status, error.body);
+          await setAccountState(uuid, NetworkState.NetworkError);
         }
       } else {
-        console.error("Failed to set client state:", error);
+        console.error("Failed to push new client state:", error);
+        await setAccountState(uuid, NetworkState.NetworkError);
       }
     }
   }
@@ -157,7 +173,7 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log("Authorize response:", response);
       if(response.success) {
         await addAccount(uuid, name, response.authKey);
-        const result = await getClientState(uuid, response.authKey);
+        const result = await fetchClientState(uuid, response.authKey);
         if(!result) return null; // This should never happen
         setStates(prev => ({ ...prev, [uuid]: result }));
         return result;
@@ -166,23 +182,22 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if(error instanceof ApiError) {
         console.error("Unhandled API error:", error.status, error.body);
       } else {
-        console.error("Failed to set client state:", error);
+        console.error("Failed to authorize client:", error);
       }
     }
     return null;
   }
 
-  const refreshAccounts = async () => {
-    await loadAccounts(true);
-    Object.entries(accounts).forEach(async ([uuid, account]) => {
-      const newState = await getClientState(uuid, account.authKey);
-      if (newState) setStates({...states, newState});
-    });
-  };
+  useEffect(() => {
+    loadAccounts(true);
+  }, []);
 
   useEffect(() => {
-    refreshAccounts();
-  }, []);
+    if(fetchOnce.current) return; // Prevent fetching multiple times
+    if(!Object.keys(accounts).length) return; // No accounts yet
+    fetchOnce.current = true;
+    fetchClients();
+  }, [accounts]);
 
   return (
     <AccountsContext.Provider value={{ accounts, states, authorizeClient }}>
