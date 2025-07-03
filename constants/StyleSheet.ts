@@ -31,6 +31,13 @@ export function baseStyles(theme: 'light'|'dark') {
       fontWeight: 'bold',
       marginTop: -10,
     },
+    plainSubtitle: {
+      color: Colors[theme].inactive,
+      fontSize: 14,
+      textTransform: 'uppercase',
+      fontWeight: 'bold',
+      marginTop: -10,
+    },
     text: {
       color: Colors[theme].text,
     },

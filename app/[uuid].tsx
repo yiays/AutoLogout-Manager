@@ -1,8 +1,8 @@
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { useAccounts } from "@/providers/AccountsProvider";
 import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useEffect } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { RefreshControl, ScrollView, Text, View } from "react-native";
 
 function minutesToTime(mins: number): string {
   const h = Math.floor(mins / 60);
@@ -17,18 +17,54 @@ function secondsToTime(secs: number): string {
   return `${h} hour${h !== 1 ? 's' : ''}, ${m} minute${m !== 1 ? 's' : ''}, and ${s} second${s != 1? 's': ''}`;
 }
 
+function timestampToRelativeTime(timestamp: number): string {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  
+  if (hours > 0) {
+    return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+  } else if (minutes > 0) {
+    return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+  } else {
+    return `${seconds} second${seconds !== 1 ? 's' : ''} ago`;
+  }
+}
+
 export default function() {
   const navigation = useNavigation();
   const styleSheet = useThemeColor();
   const params: {uuid: string} = useLocalSearchParams();
-  const { accounts, states } = useAccounts();
+  const {accounts, states, fetchClientState} = useAccounts();
+
   const account = accounts[params.uuid];
   const state = states[params.uuid];
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh  = async() => {
+    setRefreshing(true);
+    await fetchClientState(params.uuid, account.authKey);
+    setRefreshing(false);
+  }
   
   useEffect(() => navigation.setOptions({title: "Account: " + account?.name}), [account]);
+
+  const [lastSync, setLastSync] = useState('Never');
+  useEffect(() => {
+    let interval: number | undefined;
+    if(account?.lastSync > 0) {
+      setLastSync(timestampToRelativeTime(account.lastSync));
+      interval = setInterval(() => setLastSync(timestampToRelativeTime(account.lastSync)), 1000);
+    }else setLastSync('Never');
+    return () => interval? clearInterval(interval): void 0;
+  }, [account.lastSync]);
   
   return (
-    <ScrollView style={styleSheet.view}>
+    <ScrollView style={styleSheet.view} refreshControl={
+      <RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>
+    }>
       <View style={styleSheet.container}>
         {
         !account ? 
@@ -36,14 +72,19 @@ export default function() {
         :
         <>
           <Text style={styleSheet.title}>{account.name}</Text>
-          <Text style={styleSheet.subtitle}>UUID: {params.uuid}</Text>
+          <Text style={styleSheet.subtitle}>{params.uuid}</Text>
+          <Text style={{...styleSheet.plainSubtitle, marginTop:0}}>Last sync: {lastSync}</Text>
+          {
+          account.lastSync > 0 && (Date.now() - account.lastSync) / 1000 > 60 ?
+            <Text style={{...styleSheet.text, fontStyle: 'italic'}}>Pull down to refresh</Text>
+          :
+            <></>
+          }
           {
           account.state == -2 ?
             <Text style={styleSheet.errorNote}>Unable to load account. Check your network connection.</Text>
           : account.state == -1 ?
             <Text style={styleSheet.errorNote}>You have been signed out of this account. Type in the password to sign in again.</Text>
-          : account.state == 0 ?
-            <Text style={styleSheet.errorNote}>This account hasn't finished loading. Please wait a moment.</Text>
           :
             <></>
           }

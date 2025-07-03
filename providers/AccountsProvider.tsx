@@ -13,6 +13,7 @@ export type Account = {
   name: string;
   authKey: string;
   state: NetworkState;
+  lastSync: number;
 };
 
 type Accounts = {
@@ -38,6 +39,7 @@ type AccountsContextType = {
   accounts: Accounts;
   states: States;
   authorizeClient: (uuid: string, name: string, password: string) => Promise<ClientState | ApiError | null>;
+  fetchClientState: (uuid: string, token: string) => Promise<ClientState | null>;
 };
 
 OpenAPI.BASE = 'https://autologout.yiays.com';
@@ -47,6 +49,11 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [accounts, setAccounts] = useState<Accounts>({});
   const [states, setStates] = useState<States>({});
   const fetchOnce = useRef(false);
+
+  const recentSyncThresholdMet = (): boolean => {
+    // Checks if the oldest sync is within the last 15 minutes
+    return Math.min(...Object.values(accounts).map(a => a.lastSync)) > Date.now() - 15 * 60 * 1000;
+  }
 
   const loadAccounts = async(coldstart: boolean = false): Promise<Accounts> => {
     const rawAccounts = await AsyncStorage.getItem('accounts');
@@ -64,13 +71,18 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const setAccountState = async(uuid: string, state: NetworkState): Promise<void> => {
     accounts[uuid].state = state;
+    if(state == NetworkState.Active) accounts[uuid].lastSync = Date.now();
     await AsyncStorage.setItem('accounts', JSON.stringify(accounts));
-    setAccounts(prev => ({ ...prev, [uuid]: { ...prev[uuid], state } }));
+    setAccounts(prev => ({...prev, [uuid]: {
+      ...prev[uuid],
+      state,
+      ...(state == NetworkState.Active? {lastSync: Date.now()}: {})
+    }}));
   }
 
   // Add a new client, after passing authorization checks
   const addAccount = async(uuid: string, name: string, authKey:string): Promise<void> => {
-    accounts[uuid] = { name: name, authKey: authKey, state: NetworkState.Unknown };
+    accounts[uuid] = { name: name, authKey: authKey, state: NetworkState.Unknown, lastSync: 0 };
     await AsyncStorage.setItem('accounts', JSON.stringify(accounts));
     setAccounts(prev => ({ ...prev, [uuid]: { ...accounts[uuid] } }));
   }
@@ -196,11 +208,13 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if(fetchOnce.current) return; // Prevent fetching multiple times
     if(!Object.keys(accounts).length) return; // No accounts yet
     fetchOnce.current = true;
-    fetchClients();
+    // Avoid fetching all if they already synced recently
+    if(!recentSyncThresholdMet())
+      fetchClients();
   }, [accounts]);
 
   return (
-    <AccountsContext.Provider value={{ accounts, states, authorizeClient }}>
+    <AccountsContext.Provider value={{accounts, states, authorizeClient, fetchClientState}}>
       {children}
     </AccountsContext.Provider>
   );
