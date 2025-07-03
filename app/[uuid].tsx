@@ -4,6 +4,19 @@ import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect } from "react";
 import { ScrollView, Text, View } from "react-native";
 
+function minutesToTime(mins: number): string {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h} hour${h !== 1 ? 's' : ''}, and ${m} minute${m !== 1 ? 's' : ''}`;
+}
+
+function secondsToTime(secs: number): string {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs / 60) % 60);
+  const s = secs % 60;
+  return `${h} hour${h !== 1 ? 's' : ''}, ${m} minute${m !== 1 ? 's' : ''}, and ${s} second${s != 1? 's': ''}`;
+}
+
 export default function() {
   const navigation = useNavigation();
   const styleSheet = useThemeColor();
@@ -34,7 +47,18 @@ export default function() {
           :
             <></>
           }
-          </>
+          <Text style={styleSheet.paragraph}></Text>
+          <Text style={styleSheet.label}>Last usage:</Text>
+          <Text style={styleSheet.text}>{minutesToTime(state.usedTime?? 0)} (on {state.usageDate})</Text>
+          <Text style={styleSheet.label}>Time limit (today):</Text>
+          <Text style={styleSheet.text}>{secondsToTime(state.todayTimeLimit)}</Text>
+          <Text style={styleSheet.label}>Time limit (daily):</Text>
+          <Text style={styleSheet.text}>{secondsToTime(state.dailyTimeLimit)}</Text>
+          <Text style={styleSheet.label}>Downtime:</Text>
+          <Text style={styleSheet.text}>
+            {state.bedtime == state.waketime? 'No restrictions': `From ${state.bedtime} until ${state.waketime}`}
+          </Text>
+        </>
         }
       </View>
     </ScrollView>
