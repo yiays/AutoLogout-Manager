@@ -39,6 +39,7 @@ export function baseStyles(theme: 'light'|'dark') {
       fontSize: 11,
       textTransform: 'uppercase',
       fontWeight: 'bold',
+      marginTop: 10,
     },
     spanImage: {
       width: '100%',

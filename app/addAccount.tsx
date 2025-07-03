@@ -1,9 +1,9 @@
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { useAccounts } from "@/providers/AccountsProvider";
 import { Image } from "expo-image";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Button, ScrollView, Text, TextInput, View } from "react-native";
+import { Button, Linking, Platform, ScrollView, Text, TextInput, View } from "react-native";
 
 export default function() {
   const styleSheet = useThemeColor();
@@ -103,6 +103,13 @@ export default function() {
             style={{...styleSheet.spanImage, aspectRatio:0.883, maxHeight: 800}}
             source={require('@/assets/images/Connect to your phone.png')}
           />
+          <Text style={styleSheet.paragraph}>
+            If any of these buttons are missing on your version of AutoLogout, you may need to update it.
+            You can find the latest version of AutoLogout below.
+          </Text>
+          <Link style={styleSheet.paragraph} href="https://github.com/yiays/AutoLogout/releases" target="_blank">
+            <Button title="AutoLogout for Windows Releases" onPress={() => Platform.OS != 'web' ? Linking.openURL("https://github.com/yiays/AutoLogout/releases"): null}/>
+          </Link>
         </>:<>
           <Text style={styleSheet.label}>Account name:</Text>
           <TextInput style={styleSheet.textInput} value={name} readOnly={Boolean(params.name)} onChangeText={validateName} textContentType="none" maxLength={50}></TextInput>
