@@ -7,8 +7,10 @@ import { DrawerContentComponentProps, DrawerContentScrollView, DrawerItem } from
 import { router } from "expo-router";
 import { Drawer } from "expo-router/drawer";
 import { StatusBar } from "expo-status-bar";
+import { Text, View } from "react-native";
 
 function DrawerContent(props: DrawerContentComponentProps & { activeTintColor: string, inactiveTintColor: string }) {
+  const styleSheet = useThemeColor();
   const {accounts} = useAccounts();
   const activeRoute = props.state.routes[props.state.index];
   const activeTintColor = props.activeTintColor;
@@ -25,6 +27,8 @@ function DrawerContent(props: DrawerContentComponentProps & { activeTintColor: s
         labelStyle={{ color: activeRoute.name === "index" ? activeTintColor : inactiveTintColor }}
         onPress={() => router.push("/")}
       />
+      <View style={styleSheet.separator}/>
+      <Text style={styleSheet.navLabel}>Accounts</Text>
       {
         Object.entries(accounts).map(([uuid, account]) => {
           const focused = (

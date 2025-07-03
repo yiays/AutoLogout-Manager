@@ -77,6 +77,16 @@ export function baseStyles(theme: 'light'|'dark') {
     separator: {
       height: 1,
       width: '100%',
+      backgroundColor: Colors[theme].inactive,
+      marginVertical: 8,
+      opacity: 0.5,
+    },
+    navLabel: {
+      color: Colors[theme].inactive,
+      fontSize: 14,
+      textTransform: 'uppercase',
+      fontWeight: 'bold',
+      marginLeft: 16,
       marginVertical: 8,
     },
     link: {
