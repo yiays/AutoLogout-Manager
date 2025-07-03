@@ -1,3 +1,4 @@
+import { ApiError } from "@/api-client";
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { useAccounts } from "@/providers/AccountsProvider";
 import { Image } from "expo-image";
@@ -81,11 +82,18 @@ export default function() {
     }
 
     const result = await authorizeClient(uuid, name, password);
-    if (result) {
+    if (result instanceof ApiError) {
+      if(result.status == 401)
+        setSubmitError("Incorrect password. Make sure you entered the password you set when opening AutoLogout on this account.");
+      else if(result.status == 404)
+        setSubmitError("Account not found. Make sure the computer is online. You may need to click 'Connect to your phone' again.");
+      else
+        setSubmitError("Server error. Please try again later.");
+    } else if(result) {
       console.log("Account created with", { name, uuid, password });
       router.replace({ pathname: "/[uuid]", params: { uuid } });
     } else {
-      setSubmitError("Failed to add account. Double-check your internet connection and try again.");
+      setSubmitError("Failed reach server. Double-check your internet connection and try again.");
     }
   }
 

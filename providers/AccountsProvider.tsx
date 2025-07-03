@@ -37,7 +37,7 @@ type States = {
 type AccountsContextType = {
   accounts: Accounts;
   states: States;
-  authorizeClient: (uuid: string, name: string, password: string) => Promise<ClientState | null>;
+  authorizeClient: (uuid: string, name: string, password: string) => Promise<ClientState | ApiError | null>;
 };
 
 OpenAPI.BASE = 'https://autologout.yiays.com';
@@ -166,7 +166,7 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }
 
-  const authorizeClient = async(uuid:string, name:string, password:string): Promise<ClientState | null> => {
+  const authorizeClient = async(uuid:string, name:string, password:string): Promise<ClientState | ApiError | null> => {
     OpenAPI.TOKEN = undefined;
     try {
       const response = await DefaultService.getClientAuthorize(uuid, password);
@@ -180,7 +180,7 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     } catch (error) {
       if(error instanceof ApiError) {
-        console.error("Unhandled API error:", error.status, error.body);
+        return error;
       } else {
         console.error("Failed to authorize client:", error);
       }
