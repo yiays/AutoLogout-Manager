@@ -2,6 +2,7 @@ import Colors from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { AccountsProvider, useAccounts } from "@/providers/AccountsProvider";
+import { MaterialIcons } from "@expo/vector-icons";
 import { DrawerContentComponentProps, DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { router } from "expo-router";
 import { Drawer } from "expo-router/drawer";
@@ -17,6 +18,9 @@ function DrawerContent(props: DrawerContentComponentProps & { activeTintColor: s
     <DrawerContentScrollView>
       <DrawerItem
         label="About"
+        icon={({size}) => (
+          <MaterialIcons name="info" color={activeRoute.name=="index" ? activeTintColor : inactiveTintColor} size={size}/>
+        )}
         focused={activeRoute.name=='index'}
         labelStyle={{ color: activeRoute.name === "index" ? activeTintColor : inactiveTintColor }}
         onPress={() => router.push("/")}
@@ -32,6 +36,9 @@ function DrawerContent(props: DrawerContentComponentProps & { activeTintColor: s
           return <DrawerItem
             key={uuid}
             label={account.name}
+            icon={({size}) => (
+              <MaterialIcons name="computer" color={focused ? activeTintColor : inactiveTintColor} size={size}/>
+            )}
             focused={focused}
             labelStyle={{ color: focused ? activeTintColor : inactiveTintColor }}
             onPress={() => router.push({pathname: "/[uuid]", params:{uuid}})}
@@ -40,6 +47,9 @@ function DrawerContent(props: DrawerContentComponentProps & { activeTintColor: s
       }
       <DrawerItem
         label="Add an account"
+        icon={({size}) => (
+          <MaterialIcons name="add" color={activeRoute.name=="addAccount" ? activeTintColor : inactiveTintColor} size={size}/>
+        )}
         focused={activeRoute.name=='addAccount'}
         labelStyle={{ color: activeRoute.name=="addAccount" ? activeTintColor : inactiveTintColor }}
         onPress={() => router.push("/addAccount")}
