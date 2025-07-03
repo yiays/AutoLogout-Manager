@@ -1,5 +1,6 @@
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { useAccounts } from "@/providers/AccountsProvider";
+import { MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { RefreshControl, ScrollView, Text, View } from "react-native";
@@ -71,6 +72,7 @@ export default function() {
           <Text style={styleSheet.text}>Loading...</Text>
         :
         <>
+          <MaterialIcons name="computer" size={128} color={styleSheet.tint.color} style={{marginTop: -24}}/>
           <Text style={styleSheet.title}>{account.name}</Text>
           <Text style={styleSheet.subtitle}>{params.uuid}</Text>
           <Text style={{...styleSheet.plainSubtitle, marginTop:0}}>Last sync: {lastSync}</Text>
@@ -88,13 +90,13 @@ export default function() {
           :
             <></>
           }
-          <Text style={styleSheet.paragraph}></Text>
+          <Text style={styleSheet.text}></Text>
           <Text style={styleSheet.label}>Last usage:</Text>
-          <Text style={styleSheet.text}>{minutesToTime(state.usedTime?? 0)} (on {state.usageDate})</Text>
+          <Text style={styleSheet.text}>{secondsToTime(state.usedTime?? 0)} (on {state.usageDate})</Text>
           <Text style={styleSheet.label}>Time limit (today):</Text>
-          <Text style={styleSheet.text}>{secondsToTime(state.todayTimeLimit)}</Text>
+          <Text style={styleSheet.text}>{state.todayTimeLimit == -1? 'Unlimited': secondsToTime(state.todayTimeLimit)}</Text>
           <Text style={styleSheet.label}>Time limit (daily):</Text>
-          <Text style={styleSheet.text}>{secondsToTime(state.dailyTimeLimit)}</Text>
+          <Text style={styleSheet.text}>{state.dailyTimeLimit == -1? 'Unlimited': secondsToTime(state.dailyTimeLimit)}</Text>
           <Text style={styleSheet.label}>Downtime:</Text>
           <Text style={styleSheet.text}>
             {state.bedtime == state.waketime? 'No restrictions': `From ${state.bedtime} until ${state.waketime}`}
