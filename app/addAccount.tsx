@@ -1,10 +1,11 @@
 import { ApiError } from "@/api-client";
+import ExternalLinkButton from "@/components/ExternalLinkButton";
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { useAccounts } from "@/providers/AccountsProvider";
 import { Image } from "expo-image";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Button, Linking, Platform, ScrollView, Text, TextInput, View } from "react-native";
+import { Button, ScrollView, Text, TextInput, View } from "react-native";
 
 export default function() {
   const styleSheet = useThemeColor();
@@ -90,7 +91,7 @@ export default function() {
       else
         setSubmitError("Server error. Please try again later.");
     } else if(result) {
-      console.log("Account created with", { name, uuid, password });
+      console.log("Account created with", { name, uuid });
       router.replace({ pathname: "/[uuid]", params: { uuid } });
     } else {
       setSubmitError("Failed reach server. Double-check your internet connection and try again.");
@@ -115,9 +116,7 @@ export default function() {
             If any of these buttons are missing on your version of AutoLogout, you may need to update it.
             You can find the latest version of AutoLogout below.
           </Text>
-          <Link style={styleSheet.paragraph} href="https://github.com/yiays/AutoLogout/releases" target="_blank">
-            <Button title="AutoLogout for Windows Releases" onPress={() => Platform.OS != 'web' ? Linking.openURL("https://github.com/yiays/AutoLogout/releases"): null}/>
-          </Link>
+          <ExternalLinkButton label={"AutoLogout Releases"} url={"https://github.com/yiays/AutoLogout/releases"}/>
         </>:<>
           <Text style={styleSheet.label}>Account name:</Text>
           <TextInput style={styleSheet.textInput} value={name} readOnly={Boolean(params.name)} onChangeText={validateName} textContentType="none" maxLength={50}></TextInput>

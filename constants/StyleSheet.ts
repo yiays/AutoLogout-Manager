@@ -116,16 +116,27 @@ export function baseStyles(theme: 'light'|'dark') {
     button: {
       alignItems: 'center',
       justifyContent: 'center',
+      textAlign: 'center',
       paddingVertical: 12,
       paddingHorizontal: 32,
-      marginBottom: 16,
       borderRadius: 4,
       elevation: 3,
-      backgroundColor: Colors[theme].background,
+      backgroundColor: Colors[theme].action,
+      textTransform: 'uppercase',
+      fontWeight: "500",
       color: 'white'
     },
     buttonText: {
+      textAlign: 'center',
+      textTransform: 'uppercase',
+      fontWeight: "500",
       color: 'white'
+    },
+    secondaryButton: {
+      backgroundColor: Colors[theme].tint,
+    },
+    dangerButton: {
+      backgroundColor: Colors[theme].danger,
     },
     tint: {
       color: Colors[theme].tint,

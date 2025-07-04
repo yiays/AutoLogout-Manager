@@ -1,8 +1,8 @@
+import ExternalLinkButton from "@/components/ExternalLinkButton";
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { useAccounts } from "@/providers/AccountsProvider";
 import { Image } from "expo-image";
-import { Link } from "expo-router";
-import { Button, Linking, Platform, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 export default function Index() {
   const styleSheet = useThemeColor();
@@ -20,9 +20,7 @@ export default function Index() {
           Remotely manage time limits and bedtime on Windows computers you manage.
           This is a companion app to the Windows app known as AutoLogout.
         </Text>
-        <Link style={styleSheet.paragraph} href="https://github.com/yiays/AutoLogout?tab=readme-ov-file#autologout" target="_blank">
-          <Button title="AutoLogout for Windows" onPress={() => Platform.OS != 'web' ? Linking.openURL("https://github.com/yiays/AutoLogout?tab=readme-ov-file#autologout"): null}/>
-        </Link>
+        <ExternalLinkButton label={"AutoLogout for Windows"} url={"https://github.com/yiays/AutoLogout?tab=readme-ov-file#autologout"}/>
         { accounts && Object.keys(accounts).length?
           <>
             <Text style={styleSheet.paragraph}>
@@ -35,6 +33,7 @@ export default function Index() {
             <Text style={styleSheet.paragraph}>
               Make sure you've installed and set up AutoLogout on any computers you want to manage.
             </Text>
+            <ExternalLinkButton label={"AutoLogout Releases"} url={"https://github.com/yiays/AutoLogout/releases"}/>
             <Text style={styleSheet.smallTitle}>Next steps</Text>
             <Text style={styleSheet.paragraph}>
               If you have a computer ready to manage, click the plus button at the top of the screen
