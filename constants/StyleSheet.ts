@@ -12,6 +12,11 @@ export function baseStyles(theme: 'light'|'dark') {
     container: {
       padding: 30,
     },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
     title: {
       color: Colors[theme].text,
       fontSize: 28,
