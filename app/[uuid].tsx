@@ -171,31 +171,56 @@ export default function() {
           : account.state == -1 ?
             <Text style={styleSheet.errorNote}>You have been signed out of this account. Type in the password to sign in again.</Text>
           :
-            <></>
-          }
-          <Text style={styleSheet.text}></Text>
-          
-          <Text style={styleSheet.label}>Last usage:</Text>
+            <>
+              <Text style={styleSheet.text}></Text>
+              
+              <Text style={styleSheet.label}>Last usage:</Text>
+              <Text style={styleSheet.text}>{secondsToTime(state.usedTime?? 0)} (on {state.usageDate})</Text>
           <Text style={styleSheet.text}>{secondsToTime(state.usedTime?? 0)} (on {state.usageDate})</Text>
           
-          <Text style={styleSheet.label}>Time limit (today):</Text>
-          <HourMinutePicker
-            value={typeof todayTimeLimit == 'object'? todayTimeLimit: {hour:0, minute:0}}
-            onChange={setTodayTimeLimit}
-            enabled={todayTimeLimit !== false}
-            onEnableChange={(val) => setTodayTimeLimit(val? {hour:2, minute:0}: false)}
-            zIndex={1002}
-          />
+              <Text style={styleSheet.label}>Time limit (today):</Text>
+              <HourMinutePicker
+                value={typeof todayTimeLimit == 'object'? todayTimeLimit: {hour:0, minute:0}}
+                onChange={setTodayTimeLimit}
+                enabled={todayTimeLimit !== false}
+                onEnableChange={(val) => setTodayTimeLimit(val? {hour:2, minute:0}: false)}
+                zIndex={1004}
+              />
 
-          <Text style={styleSheet.label}>Time limit (daily):</Text>
-          <HourMinutePicker
-            value={typeof dailyTimeLimit == 'object'? dailyTimeLimit: {hour:0, minute:0}}
-            onChange={setDailyTimeLimit}
-            enabled={dailyTimeLimit !== false}
-            onEnableChange={(val) => setDailyTimeLimit(val? {hour:2, minute:0}: false)}
-            zIndex={1001}
-          />
+              <Text style={styleSheet.label}>Time limit (daily):</Text>
+              <HourMinutePicker
+                value={typeof dailyTimeLimit == 'object'? dailyTimeLimit: {hour:0, minute:0}}
+                onChange={setDailyTimeLimit}
+                enabled={dailyTimeLimit !== false}
+                onEnableChange={(val) => setDailyTimeLimit(val? {hour:2, minute:0}: false)}
+                zIndex={1003}
+              />
 
+              <Text style={styleSheet.label}>Downtime:</Text>
+              <View style={{...styleSheet.row, marginTop: 8}}>
+                <Switch value={bedTime !== false} onValueChange={downtimeToggle}/>
+                <Text style={{...styleSheet.text, marginHorizontal:4}}>{bedTime !== false ? "Enabled" : "Disabled"}</Text>
+              </View>
+              { wakeTime !== false ?
+                <>
+                  <View style={{...styleSheet.row, zIndex:1002}}>
+                    <Text style={{...styleSheet.text, marginRight: 4}}>From</Text>
+                    <HourMinutePicker
+                      value={typeof wakeTime == 'object'? wakeTime: {hour:0, minute:0}}
+                      onChange={setWakeTime}
+                    />
+                  </View>
+                  <View style={{...styleSheet.row, zIndex:1001}}>
+                    <Text style={{...styleSheet.text, marginRight: 4}}>Until</Text>
+                    <HourMinutePicker
+                      value={typeof bedTime == 'object'? bedTime: {hour:0, minute:0}}
+                      onChange={setBedTime}
+                    />
+                  </View>
+                </>
+              :
+                <Text style={styleSheet.text}>No restrictions</Text>
+              }
 
               {syncCompare() &&
                 <Button title={"Push new settings to device"} onPress={handleSync}/>
