@@ -38,6 +38,7 @@ type States = {
 type AccountsContextType = {
   accounts: Accounts;
   states: States;
+  removeClientState: (uuid: string) => Promise<void>;
   authorizeClient: (uuid: string, name: string, password: string) => Promise<ClientState | ApiError | null>;
   fetchClientState: (uuid: string, token: string) => Promise<ClientState | null>;
   pushClientState: (uuid: string, state:Partial<ClientState>, token:string) => Promise<boolean>;
@@ -217,7 +218,9 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [accounts]);
 
   return (
-    <AccountsContext.Provider value={{accounts, states, authorizeClient, fetchClientState}}>
+    <AccountsContext.Provider
+      value={{accounts, states, removeClientState, authorizeClient, fetchClientState, pushClientState}}
+    >
       {children}
     </AccountsContext.Provider>
   );

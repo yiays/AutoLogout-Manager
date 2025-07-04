@@ -1,5 +1,6 @@
 import { HourMinutePicker } from "@/components/HourMinutePicker";
 import ReAuthForm from "@/components/ReAuthForm";
+import RemoveAccountButton from "@/components/RemoveAccountButton";
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { ClientState, useAccounts } from "@/providers/AccountsProvider";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -168,7 +169,10 @@ export default function() {
           }
           {
           account.state == -2 ?
-            <Text style={styleSheet.errorNote}>Unable to load account. Check your network connection.</Text>
+            <>
+              <Text style={styleSheet.errorNote}>Unable to sync account. Check your network connection.</Text>
+              <RemoveAccountButton uuid={params.uuid} name={account.name}/>
+            </>
           : account.state == -1 ?
             <>
               <Text style={styleSheet.errorNote}>You have been signed out of this account. Type in the password to sign in again.</Text>
@@ -229,6 +233,10 @@ export default function() {
               {syncCompare() &&
                 <Button title={"Push new settings to device"} onPress={handleSync}/>
               }
+              <View style={styleSheet.separator}/>
+              <RemoveAccountButton uuid={params.uuid} name={account.name}/>
+            </>
+          }
         </>
         }
       </View>
