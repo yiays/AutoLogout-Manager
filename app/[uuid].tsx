@@ -7,6 +7,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { Button, RefreshControl, ScrollView, Switch, Text, View } from "react-native";
+import * as Progress from 'react-native-progress';
 
 function minutesToTime(mins: number): string {
   const h = Math.floor(mins / 60);
@@ -126,6 +127,12 @@ export default function() {
     return () => interval? clearInterval(interval): void 0;
   }, [account?.lastSync]);
 
+  function usedTimeRatio(): number {
+    const usedTime = (state.usedTime || 0);
+    const totalTime = (state.todayTimeLimit == -1? 86400: state.todayTimeLimit);
+    return clamp(usedTime / totalTime, 0, 1);
+  }
+
   function newStateToClientState() : Partial<ClientState> {
     return {
       dailyTimeLimit: dailyTimeLimit? dailyTimeLimit.hour * 3600 + dailyTimeLimit.minute * 60: -1,
@@ -184,8 +191,8 @@ export default function() {
               
               <Text style={styleSheet.label}>Last usage:</Text>
               <Text style={styleSheet.text}>{secondsToTime(state.usedTime?? 0)} (on {state.usageDate})</Text>
-          <Text style={styleSheet.text}>{secondsToTime(state.usedTime?? 0)} (on {state.usageDate})</Text>
-          
+              <Progress.Bar width={300} progress={usedTimeRatio()} color={styleSheet.tint.color}/>
+
               <Text style={styleSheet.label}>Time limit (today):</Text>
               <HourMinutePicker
                 value={typeof todayTimeLimit == 'object'? todayTimeLimit: {hour:0, minute:0}}
