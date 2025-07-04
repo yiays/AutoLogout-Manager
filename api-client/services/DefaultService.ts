@@ -102,13 +102,13 @@ export class DefaultService {
         parentMode?: boolean | null,
         requestBody?: {
             hashedPassword?: string;
-            dailyTimeLimit: number;
-            todayTimeLimit: number;
+            dailyTimeLimit?: number;
+            todayTimeLimit?: number;
             usedTime?: number;
-            usageDate: string;
-            bedtime: string;
-            waketime: string;
-            graceGiven: boolean;
+            usageDate?: string;
+            bedtime?: string;
+            waketime?: string;
+            graceGiven?: boolean;
             syncAuthor?: string | null;
         },
     ): CancelablePromise<{

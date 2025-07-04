@@ -40,6 +40,7 @@ type AccountsContextType = {
   states: States;
   authorizeClient: (uuid: string, name: string, password: string) => Promise<ClientState | ApiError | null>;
   fetchClientState: (uuid: string, token: string) => Promise<ClientState | null>;
+  pushClientState: (uuid: string, state:Partial<ClientState>, token:string) => Promise<boolean>;
 };
 
 OpenAPI.BASE = 'https://autologout.yiays.com';
@@ -154,13 +155,14 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }
 
-  const pushClientState = async(uuid: string, state:ClientState, token:string): Promise<void> => {
+  const pushClientState = async(uuid: string, state:Partial<ClientState>, token:string): Promise<boolean> => {
     OpenAPI.TOKEN = token;
     try {
       const response = await DefaultService.postStateSync(uuid, true, state);
       if (response.accepted) {
-        await saveClientState(uuid, {...state, ...response.delta});
+        await saveClientState(uuid, {...states[uuid], ...state, ...response.delta});
         await setAccountState(uuid, NetworkState.Active);
+        return true;
       }
     } catch (error) {
       if(error instanceof ApiError) {
@@ -176,6 +178,7 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         await setAccountState(uuid, NetworkState.NetworkError);
       }
     }
+    return false;
   }
 
   const authorizeClient = async(uuid:string, name:string, password:string): Promise<ClientState | ApiError | null> => {

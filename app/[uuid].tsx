@@ -1,10 +1,10 @@
 import { HourMinutePicker } from "@/components/HourMinutePicker";
 import { useThemeColor } from "@/hooks/useThemeStyle";
-import { useAccounts } from "@/providers/AccountsProvider";
+import { ClientState, useAccounts } from "@/providers/AccountsProvider";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
-import { RefreshControl, ScrollView, Switch, Text, View } from "react-native";
+import { Button, RefreshControl, ScrollView, Switch, Text, View } from "react-native";
 
 function minutesToTime(mins: number): string {
   const h = Math.floor(mins / 60);
@@ -123,6 +123,27 @@ export default function() {
     }else setLastSync('Never');
     return () => interval? clearInterval(interval): void 0;
   }, [account?.lastSync]);
+
+  function newStateToClientState() : Partial<ClientState> {
+    return {
+      dailyTimeLimit: dailyTimeLimit? dailyTimeLimit.hour * 3600 + dailyTimeLimit.minute * 60: -1,
+      todayTimeLimit: todayTimeLimit? todayTimeLimit.hour * 3600 + todayTimeLimit.minute * 60: -1,
+      bedtime: (bedTime? `${bedTime.hour < 10? '0': ''}${bedTime.hour}:${bedTime.minute < 10? '0': ''}${bedTime.minute}`:'00:00') + ':00',
+      waketime: (wakeTime? `${wakeTime.hour < 10? '0': ''}${wakeTime.hour}:${wakeTime.minute < 10? '0': ''}${wakeTime.minute}`:'00:00') + ':00',
+    }
+  }
+
+  function syncCompare(): boolean {
+    const a = JSON.stringify({...state, ...newStateToClientState()});
+    const b = JSON.stringify(state);
+    // if(a!=b) console.log('\n', a, '\n', b);
+    return a != b;
+  }
+
+  async function handleSync() {
+    if(await pushClientState(params.uuid, newStateToClientState(), account.authKey))
+      await onRefresh();
+  }
   
   return (
     <ScrollView style={styleSheet.view} refreshControl={
@@ -175,27 +196,10 @@ export default function() {
             zIndex={1001}
           />
 
-          <Text style={styleSheet.label}>Downtime:</Text>
-          <View style={{...styleSheet.row, marginTop: 8}}>
-            <Switch value={bedTime !== false} onValueChange={downtimeToggle}/>
-            <Text style={{...styleSheet.text, marginHorizontal:4}}>{bedTime !== false ? "Enabled" : "Disabled"}</Text>
-          </View>
-          <View style={styleSheet.row}>
-            <Text style={{...styleSheet.text, marginRight: 4}}>From</Text>
-            <HourMinutePicker
-              value={typeof wakeTime == 'object'? wakeTime: {hour:0, minute:0}}
-              onChange={setWakeTime}
-              enabled={wakeTime !== false}
-            />
-          </View>
-          <View style={styleSheet.row}>
-            <Text style={{...styleSheet.text, marginRight: 4}}>Until</Text>
-            <HourMinutePicker
-              value={typeof bedTime == 'object'? bedTime: {hour:0, minute:0}}
-              onChange={setBedTime}
-              enabled={bedTime !== false}
-            />
-          </View>
+
+              {syncCompare() &&
+                <Button title={"Push new settings to device"} onPress={handleSync}/>
+              }
         </>
         }
       </View>
