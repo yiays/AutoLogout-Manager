@@ -1,9 +1,10 @@
+import { HourMinutePicker } from "@/components/HourMinutePicker";
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { useAccounts } from "@/providers/AccountsProvider";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
-import { RefreshControl, ScrollView, Text, View } from "react-native";
+import { RefreshControl, ScrollView, Switch, Text, View } from "react-native";
 
 function minutesToTime(mins: number): string {
   const h = Math.floor(mins / 60);
@@ -34,6 +35,10 @@ function timestampToRelativeTime(timestamp: number): string {
   }
 }
 
+function clamp(value:number, min:number, max:number): number {
+  return Math.min(Math.max(value, min), max);
+};
+
 export default function() {
   const navigation = useNavigation();
   const styleSheet = useThemeColor();
@@ -42,6 +47,11 @@ export default function() {
 
   const account = accounts[params.uuid];
   const state = states[params.uuid];
+  
+  const [todayTimeLimit, setTodayTimeLimit] = useState<{hour:number, minute:number} | false>(false);
+  const [dailyTimeLimit, setDailyTimeLimit] = useState<{hour:number, minute:number} | false>(false);
+  const [wakeTime, setWakeTime] = useState<{hour:number, minute:number} | false>(false);
+  const [bedTime, setBedTime] = useState<{hour:number, minute:number} | false>(false);
 
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh  = async() => {
@@ -50,7 +60,59 @@ export default function() {
     setRefreshing(false);
   }
   
-  useEffect(() => navigation.setOptions({title: "Account: " + account?.name}), [account]);
+  useEffect(() => {
+    // Variables which values should be updated when the account changes
+    navigation.setOptions({title: "Account: " + account?.name});
+  }, [account]);
+
+  useEffect(() => {
+    // Variables which values should be updated when the state changes
+    if(state) {
+      if(state.todayTimeLimit >= 0) {
+        const safeHour = clamp(Math.floor(state.todayTimeLimit / 3600), 0, 23);
+        const safeMinute = clamp(Math.ceil(state.todayTimeLimit % 60 / 5) * 5, 0, 55);
+        setTodayTimeLimit({hour: safeHour, minute: safeMinute});
+      }else{
+        setTodayTimeLimit(false);
+      }
+
+      if(state.dailyTimeLimit >= 0) {
+        const safeHour = clamp(Math.floor(state.dailyTimeLimit / 3600), 0, 23);
+        const safeMinute = clamp(Math.ceil(state.dailyTimeLimit % 60 / 5) * 5, 0, 55);
+        setDailyTimeLimit({hour: safeHour, minute: safeMinute});
+      }else{
+        setDailyTimeLimit(false);
+      }
+      
+      if(state.waketime != state.bedtime) {
+        {
+          const parsedTime = Date.parse(`1970-01-01 ${state.waketime}Z`) / 1000;
+          const safeHour = clamp(Math.floor(parsedTime / 3600), 0, 23);
+          const safeMinute = clamp(Math.ceil(parsedTime % 60 / 5) * 5, 0, 55);
+          setWakeTime({hour: safeHour, minute: safeMinute});
+        }
+        {
+          const parsedTime = Date.parse(`1970-01-01 ${state.bedtime}Z`) / 1000;
+          const safeHour = clamp(Math.floor(parsedTime / 3600), 0, 23);
+          const safeMinute = clamp(Math.ceil(parsedTime % 60 / 5) * 5, 0, 55);
+          setBedTime({hour: safeHour, minute: safeMinute});
+        }
+      }else{
+        setWakeTime(false);
+        setBedTime(false);
+      }
+    }
+  }, [state]);
+
+  function downtimeToggle(val:boolean) {
+    if(val) {
+      setBedTime({hour: 22, minute: 0});
+      setWakeTime({hour: 8, minute: 0});
+    }else{
+      setBedTime(false);
+      setWakeTime(false);
+    }
+  }
 
   const [lastSync, setLastSync] = useState('Never');
   useEffect(() => {
@@ -60,7 +122,7 @@ export default function() {
       interval = setInterval(() => setLastSync(timestampToRelativeTime(account.lastSync)), 1000);
     }else setLastSync('Never');
     return () => interval? clearInterval(interval): void 0;
-  }, [account.lastSync]);
+  }, [account?.lastSync]);
   
   return (
     <ScrollView style={styleSheet.view} refreshControl={
@@ -91,16 +153,49 @@ export default function() {
             <></>
           }
           <Text style={styleSheet.text}></Text>
+          
           <Text style={styleSheet.label}>Last usage:</Text>
           <Text style={styleSheet.text}>{secondsToTime(state.usedTime?? 0)} (on {state.usageDate})</Text>
+          
           <Text style={styleSheet.label}>Time limit (today):</Text>
-          <Text style={styleSheet.text}>{state.todayTimeLimit == -1? 'Unlimited': secondsToTime(state.todayTimeLimit)}</Text>
+          <HourMinutePicker
+            value={typeof todayTimeLimit == 'object'? todayTimeLimit: {hour:0, minute:0}}
+            onChange={setTodayTimeLimit}
+            enabled={todayTimeLimit !== false}
+            onEnableChange={(val) => setTodayTimeLimit(val? {hour:2, minute:0}: false)}
+            zIndex={1002}
+          />
+
           <Text style={styleSheet.label}>Time limit (daily):</Text>
-          <Text style={styleSheet.text}>{state.dailyTimeLimit == -1? 'Unlimited': secondsToTime(state.dailyTimeLimit)}</Text>
+          <HourMinutePicker
+            value={typeof dailyTimeLimit == 'object'? dailyTimeLimit: {hour:0, minute:0}}
+            onChange={setDailyTimeLimit}
+            enabled={dailyTimeLimit !== false}
+            onEnableChange={(val) => setDailyTimeLimit(val? {hour:2, minute:0}: false)}
+            zIndex={1001}
+          />
+
           <Text style={styleSheet.label}>Downtime:</Text>
-          <Text style={styleSheet.text}>
-            {state.bedtime == state.waketime? 'No restrictions': `From ${state.bedtime} until ${state.waketime}`}
-          </Text>
+          <View style={{...styleSheet.row, marginTop: 8}}>
+            <Switch value={bedTime !== false} onValueChange={downtimeToggle}/>
+            <Text style={{...styleSheet.text, marginHorizontal:4}}>{bedTime !== false ? "Enabled" : "Disabled"}</Text>
+          </View>
+          <View style={styleSheet.row}>
+            <Text style={{...styleSheet.text, marginRight: 4}}>From</Text>
+            <HourMinutePicker
+              value={typeof wakeTime == 'object'? wakeTime: {hour:0, minute:0}}
+              onChange={setWakeTime}
+              enabled={wakeTime !== false}
+            />
+          </View>
+          <View style={styleSheet.row}>
+            <Text style={{...styleSheet.text, marginRight: 4}}>Until</Text>
+            <HourMinutePicker
+              value={typeof bedTime == 'object'? bedTime: {hour:0, minute:0}}
+              onChange={setBedTime}
+              enabled={bedTime !== false}
+            />
+          </View>
         </>
         }
       </View>
