@@ -20,7 +20,7 @@ type Accounts = {
   [uuid: string]: Account;
 };
 
-type ClientState = {
+export type ClientState = {
   dailyTimeLimit: number;
   todayTimeLimit: number;
   usedTime?: number;

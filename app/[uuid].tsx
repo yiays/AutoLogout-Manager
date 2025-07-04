@@ -1,4 +1,5 @@
 import { HourMinutePicker } from "@/components/HourMinutePicker";
+import ReAuthForm from "@/components/ReAuthForm";
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { ClientState, useAccounts } from "@/providers/AccountsProvider";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -43,7 +44,7 @@ export default function() {
   const navigation = useNavigation();
   const styleSheet = useThemeColor();
   const params: {uuid: string} = useLocalSearchParams();
-  const {accounts, states, fetchClientState} = useAccounts();
+  const {accounts, states, fetchClientState, pushClientState} = useAccounts();
 
   const account = accounts[params.uuid];
   const state = states[params.uuid];
@@ -169,7 +170,10 @@ export default function() {
           account.state == -2 ?
             <Text style={styleSheet.errorNote}>Unable to load account. Check your network connection.</Text>
           : account.state == -1 ?
-            <Text style={styleSheet.errorNote}>You have been signed out of this account. Type in the password to sign in again.</Text>
+            <>
+              <Text style={styleSheet.errorNote}>You have been signed out of this account. Type in the password to sign in again.</Text>
+              <ReAuthForm uuid={params.uuid}/>
+            </>
           :
             <>
               <Text style={styleSheet.text}></Text>
