@@ -20,7 +20,7 @@ export default function Index() {
           Remotely manage time limits and bedtime on Windows computers you manage.
           This is a companion app to the Windows app known as AutoLogout.
         </Text>
-        <ExternalLinkButton label={"AutoLogout for Windows"} url={"https://github.com/yiays/AutoLogout?tab=readme-ov-file#autologout"}/>
+        <ExternalLinkButton label={"AutoLogout for Windows"} url={"https://autologout.yiays.com/download/"}/>
         { accounts && Object.keys(accounts).length?
           <>
             <Text style={styleSheet.paragraph}>
@@ -33,7 +33,6 @@ export default function Index() {
             <Text style={styleSheet.paragraph}>
               Make sure you've installed and set up AutoLogout on any computers you want to manage.
             </Text>
-            <ExternalLinkButton label={"AutoLogout Releases"} url={"https://github.com/yiays/AutoLogout/releases"}/>
             <Text style={styleSheet.smallTitle}>Next steps</Text>
             <Text style={styleSheet.paragraph}>
               If you have a computer ready to manage, click the plus button at the top of the screen

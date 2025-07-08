@@ -116,7 +116,7 @@ export default function() {
             If any of these buttons are missing on your version of AutoLogout, you may need to update it.
             You can find the latest version of AutoLogout below.
           </Text>
-          <ExternalLinkButton label={"AutoLogout Releases"} url={"https://github.com/yiays/AutoLogout/releases"}/>
+          <ExternalLinkButton label={"AutoLogout Releases"} url={"https://autologout.yiays.com/download/"}/>
         </>:<>
           <Text style={styleSheet.label}>Account name:</Text>
           <TextInput style={styleSheet.textInput} value={name} readOnly={Boolean(params.name)} onChangeText={validateName} textContentType="none" maxLength={50}></TextInput>
