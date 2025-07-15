@@ -1,12 +1,13 @@
 import { HourMinutePicker } from "@/components/HourMinutePicker";
 import ReAuthForm from "@/components/ReAuthForm";
-import RemoveAccountButton from "@/components/RemoveAccountButton";
+import RemoveAccountButton, { useRemoveAccount } from "@/components/RemoveAccountButton";
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { ClientState, useAccounts } from "@/providers/AccountsProvider";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
-import { Button, RefreshControl, ScrollView, Switch, Text, View } from "react-native";
+import { Button, RefreshControl, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
+import { Menu } from 'react-native-paper';
 import * as Progress from 'react-native-progress';
 
 function minutesToTime(mins: number): string {
@@ -63,9 +64,23 @@ export default function() {
     setRefreshing(false);
   }
   
+  const [menuVisible, setMenuVisible] = useState(false);
+  const handleRemove = useRemoveAccount(params.uuid, account?.name);
+
   useEffect(() => {
     // Variables which values should be updated when the account changes
-    navigation.setOptions({title: "Account: " + account?.name});
+    navigation.setOptions({
+      title: "Account: " + account?.name,
+      headerRight: () => 
+        <View style={{ flexDirection: "row", gap: 16, paddingHorizontal: 8 }}>
+          <TouchableOpacity onPress={onRefresh}>
+            <MaterialIcons name="refresh" size={24} color={styleSheet.text.color} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setMenuVisible(true)}>
+            <MaterialIcons name="more-vert" size={24} color={styleSheet.text.color} />
+          </TouchableOpacity>
+        </View>
+    });
   }, [account]);
 
   useEffect(() => {
@@ -156,99 +171,94 @@ export default function() {
       await onRefresh();
   }
   
-  return (
-    <ScrollView style={styleSheet.view} refreshControl={
-      <RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>
-    }>
-      <View style={styleSheet.container}>
+  return <ScrollView style={styleSheet.view} refreshControl={
+    <RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>
+  }>
+    <View style={styleSheet.menuContainer}>
+      <Menu visible={menuVisible} onDismiss={() => setMenuVisible(false)} anchor={<View style={styleSheet.menuAnchor}/>}>
+        <Menu.Item title="Remove account" onPress={() => handleRemove()}/>
+      </Menu>
+    </View>
+    <View style={styleSheet.container}>
+      {
+      !account ? 
+        <Text style={styleSheet.text}>Loading...</Text>
+      :
+      <>
+        <MaterialIcons name="computer" size={128} color={styleSheet.tint.color} style={{marginTop: -24}}/>
+        <Text style={styleSheet.title}>{account.name}</Text>
+        <Text style={styleSheet.subtitle}>{params.uuid}</Text>
+        <Text style={{...styleSheet.plainSubtitle, marginTop:0}}>Last sync: {lastSync}</Text>
         {
-        !account ? 
-          <Text style={styleSheet.text}>Loading...</Text>
+        account.state == -2 ?
+          <>
+            <Text style={styleSheet.errorNote}>Unable to sync account. Check your network connection.</Text>
+            <RemoveAccountButton uuid={params.uuid} name={account.name}/>
+          </>
+        : account.state == -1 ?
+          <>
+            <Text style={styleSheet.errorNote}>You have been signed out of this account. Type in the password to sign in again.</Text>
+            <ReAuthForm uuid={params.uuid}/>
+          </>
         :
-        <>
-          <MaterialIcons name="computer" size={128} color={styleSheet.tint.color} style={{marginTop: -24}}/>
-          <Text style={styleSheet.title}>{account.name}</Text>
-          <Text style={styleSheet.subtitle}>{params.uuid}</Text>
-          <Text style={{...styleSheet.plainSubtitle, marginTop:0}}>Last sync: {lastSync}</Text>
-          {
-          account.lastSync > 0 && (Date.now() - account.lastSync) / 1000 > 60 ?
-            <Text style={{...styleSheet.text, fontStyle: 'italic'}}>Pull down to refresh</Text>
-          :
-            <></>
-          }
-          {
-          account.state == -2 ?
-            <>
-              <Text style={styleSheet.errorNote}>Unable to sync account. Check your network connection.</Text>
-              <RemoveAccountButton uuid={params.uuid} name={account.name}/>
-            </>
-          : account.state == -1 ?
-            <>
-              <Text style={styleSheet.errorNote}>You have been signed out of this account. Type in the password to sign in again.</Text>
-              <ReAuthForm uuid={params.uuid}/>
-            </>
-          :
-            <>
-              <Text style={styleSheet.text}></Text>
-              
-              <Text style={styleSheet.label}>Last usage:</Text>
-              <Text style={styleSheet.text}>{secondsToTime(state.usedTime?? 0)} (on {state.usageDate})</Text>
-              <Progress.Bar width={300} progress={usedTimeRatio()} color={styleSheet.tint.color}/>
+          <>
+            <Text style={styleSheet.text}></Text>
+            
+            <Text style={styleSheet.label}>Last usage:</Text>
+            <Text style={styleSheet.text}>{secondsToTime(state.usedTime?? 0)} (on {state.usageDate})</Text>
+            <Progress.Bar width={300} progress={usedTimeRatio()} color={styleSheet.tint.color}/>
 
-              <Text style={styleSheet.label}>Time limit (today):</Text>
-              <HourMinutePicker
-                value={typeof todayTimeLimit == 'object'? todayTimeLimit: {hour:0, minute:0}}
-                onChange={setTodayTimeLimit}
-                enabled={todayTimeLimit !== false}
-                onEnableChange={(val) => setTodayTimeLimit(val? {hour:2, minute:0}: false)}
-                zIndex={1004}
-              />
+            <Text style={styleSheet.label}>Time limit (today):</Text>
+            <HourMinutePicker
+              value={typeof todayTimeLimit == 'object'? todayTimeLimit: {hour:0, minute:0}}
+              onChange={setTodayTimeLimit}
+              enabled={todayTimeLimit !== false}
+              onEnableChange={(val) => setTodayTimeLimit(val? {hour:2, minute:0}: false)}
+              zIndex={1004}
+            />
 
-              <Text style={styleSheet.label}>Time limit (daily):</Text>
-              <HourMinutePicker
-                value={typeof dailyTimeLimit == 'object'? dailyTimeLimit: {hour:0, minute:0}}
-                onChange={setDailyTimeLimit}
-                enabled={dailyTimeLimit !== false}
-                onEnableChange={(val) => setDailyTimeLimit(val? {hour:2, minute:0}: false)}
-                zIndex={1003}
-              />
+            <Text style={styleSheet.label}>Time limit (daily):</Text>
+            <HourMinutePicker
+              value={typeof dailyTimeLimit == 'object'? dailyTimeLimit: {hour:0, minute:0}}
+              onChange={setDailyTimeLimit}
+              enabled={dailyTimeLimit !== false}
+              onEnableChange={(val) => setDailyTimeLimit(val? {hour:2, minute:0}: false)}
+              zIndex={1003}
+            />
 
-              <Text style={styleSheet.label}>Downtime:</Text>
-              <View style={{...styleSheet.row, marginTop: 8}}>
-                <Switch value={bedTime !== false} onValueChange={downtimeToggle}/>
-                <Text style={{...styleSheet.text, marginHorizontal:4}}>{bedTime !== false ? "Enabled" : "Disabled"}</Text>
-              </View>
-              { wakeTime !== false ?
-                <>
-                  <View style={{...styleSheet.row, zIndex:1002}}>
-                    <Text style={{...styleSheet.text, marginRight: 4}}>From</Text>
-                    <HourMinutePicker
-                      value={typeof wakeTime == 'object'? wakeTime: {hour:0, minute:0}}
-                      onChange={setWakeTime}
-                    />
-                  </View>
-                  <View style={{...styleSheet.row, zIndex:1001}}>
-                    <Text style={{...styleSheet.text, marginRight: 4}}>Until</Text>
-                    <HourMinutePicker
-                      value={typeof bedTime == 'object'? bedTime: {hour:0, minute:0}}
-                      onChange={setBedTime}
-                    />
-                  </View>
-                </>
-              :
-                <Text style={styleSheet.text}>No restrictions</Text>
-              }
+            <Text style={styleSheet.label}>Downtime:</Text>
+            <View style={{...styleSheet.row, marginTop: 8}}>
+              <Switch value={bedTime !== false} onValueChange={downtimeToggle}/>
+              <Text style={{...styleSheet.text, marginHorizontal:4}}>{bedTime !== false ? "Enabled" : "Disabled"}</Text>
+            </View>
+            { wakeTime !== false ?
+              <>
+                <View style={{...styleSheet.row, zIndex:1002}}>
+                  <Text style={{...styleSheet.text, marginRight: 4}}>From</Text>
+                  <HourMinutePicker
+                    value={typeof wakeTime == 'object'? wakeTime: {hour:0, minute:0}}
+                    onChange={setWakeTime}
+                  />
+                </View>
+                <View style={{...styleSheet.row, zIndex:1001}}>
+                  <Text style={{...styleSheet.text, marginRight: 4}}>Until</Text>
+                  <HourMinutePicker
+                    value={typeof bedTime == 'object'? bedTime: {hour:0, minute:0}}
+                    onChange={setBedTime}
+                  />
+                </View>
+              </>
+            :
+              <Text style={styleSheet.paragraph}>No restrictions</Text>
+            }
 
-              {syncCompare() &&
-                <Button title={"Push new settings to device"} onPress={handleSync}/>
-              }
-              <View style={styleSheet.separator}/>
-              <RemoveAccountButton uuid={params.uuid} name={account.name}/>
-            </>
-          }
-        </>
+            {syncCompare() &&
+              <Button title={"Push new settings to device"} onPress={handleSync}/>
+            }
+          </>
         }
-      </View>
-    </ScrollView>
-  );
+      </>
+      }
+    </View>
+  </ScrollView>
 }

@@ -52,7 +52,7 @@ export function HourMinutePicker({
         </View>
       </>
       :
-      <Text style={styleSheet.text}>Unlimited</Text>
+      <Text style={styleSheet.paragraph}>Unlimited</Text>
       }
     </View>
   );

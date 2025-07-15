@@ -8,6 +8,7 @@ import { router } from "expo-router";
 import { Drawer } from "expo-router/drawer";
 import { StatusBar } from "expo-status-bar";
 import { Text, View } from "react-native";
+import { Provider } from "react-native-paper";
 
 function DrawerContent(props: DrawerContentComponentProps & { activeTintColor: string, inactiveTintColor: string }) {
   const styleSheet = useThemeColor();
@@ -69,17 +70,19 @@ export default function RootLayout() {
   return (
     <AccountsProvider>
       <StatusBar style={colorScheme == 'dark'? 'light': 'dark'}/>
-      <Drawer
-        drawerContent={(props) => DrawerContent({...props, activeTintColor: Colors[colorScheme].tint, inactiveTintColor: Colors[colorScheme].inactive})}
-        screenOptions={{
-          headerStyle: styleSheet.header,
-          headerTintColor: Colors[colorScheme].text,
-          drawerStyle: styleSheet.view,
-        }}
-      >
-        <Drawer.Screen name="index" options={{title: "About"}}/>
-        <Drawer.Screen name="addAccount" options={{title: "Add an account"}}/>
-      </Drawer>
+      <Provider>
+        <Drawer
+          drawerContent={(props) => DrawerContent({...props, activeTintColor: Colors[colorScheme].tint, inactiveTintColor: Colors[colorScheme].inactive})}
+          screenOptions={{
+            headerStyle: styleSheet.header,
+            headerTintColor: Colors[colorScheme].text,
+            drawerStyle: styleSheet.view,
+          }}
+          >
+          <Drawer.Screen name="index" options={{title: "About"}}/>
+          <Drawer.Screen name="addAccount" options={{title: "Add an account"}}/>
+        </Drawer>
+      </Provider>
     </AccountsProvider>
   );
 }

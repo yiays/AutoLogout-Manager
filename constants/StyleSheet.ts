@@ -140,6 +140,14 @@ export function baseStyles(theme: 'light'|'dark') {
     },
     tint: {
       color: Colors[theme].tint,
+    },
+    menuContainer: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+    },
+    menuAnchor: {
+      width:1,
+      height:1,
     }
   });
 }
