@@ -73,7 +73,7 @@ export default function() {
     if(state) {
       if(state.todayTimeLimit >= 0) {
         const safeHour = clamp(Math.floor(state.todayTimeLimit / 3600), 0, 23);
-        const safeMinute = clamp(Math.ceil(state.todayTimeLimit % 60 / 5) * 5, 0, 55);
+        const safeMinute = clamp(Math.ceil(state.todayTimeLimit / 60 % 60 / 5) * 5, 0, 55);
         setTodayTimeLimit({hour: safeHour, minute: safeMinute});
       }else{
         setTodayTimeLimit(false);
@@ -150,7 +150,9 @@ export default function() {
   }
 
   async function handleSync() {
-    if(await pushClientState(params.uuid, newStateToClientState(), account.authKey))
+    const newState = newStateToClientState();
+    console.log("Pushing state", newState);
+    if(await pushClientState(params.uuid, newState, account.authKey))
       await onRefresh();
   }
   

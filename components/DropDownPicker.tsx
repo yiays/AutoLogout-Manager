@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Platform } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 
@@ -9,7 +9,7 @@ export default function picker(
     enabled?: boolean,
     items: {label: string, value: any}[],
     value: any,
-    onValueChange: (val: any) => void
+    onValueChange: any
   }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(defaultValue);
@@ -22,9 +22,9 @@ export default function picker(
     setOpen(prev => enabled? prev: false);
   }, [enabled]);
 
-  const valueChanged = (val:any) => {
+  const valueChanged = (val: Dispatch<SetStateAction<any>>) => {
     setValue(val);
-    onValueChange(val);
+    onValueChange(val(value));
   }
 
   return (
