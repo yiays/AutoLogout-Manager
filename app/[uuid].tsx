@@ -23,6 +23,16 @@ function secondsToTime(secs: number): string {
   return `${h} hour${h !== 1 ? 's' : ''}, ${m} minute${m !== 1 ? 's' : ''}, and ${s} second${s != 1? 's': ''}`;
 }
 
+function tzDateToTimespan(tzdate: string): string {
+  // tzdate is either in format 'yyyy-MM-dd' or 'yyyy-MM-dd ∓hh:mm'
+  const date = Date.parse(tzdate.replace(' ', 'T00:00:00'));
+  // Find the number of days since this usage
+  const ddiff = Math.floor((Date.now() - date) / (1000 * 60 * 60 * 24));
+  if(ddiff <= 0) return "today";
+  if(ddiff == 1) return "yesterday";
+  else return `${ddiff} days ago`;
+}
+
 function timestampToRelativeTime(timestamp: number): string {
   const now = Date.now();
   const diff = now - timestamp;
@@ -74,10 +84,10 @@ export default function() {
       headerRight: () => 
         <View style={{ flexDirection: "row", gap: 16, paddingHorizontal: 8 }}>
           <TouchableOpacity onPress={onRefresh}>
-            <MaterialIcons name="refresh" size={24} color={styleSheet.text.color} />
+            <MaterialIcons name="refresh" size={24} style={styleSheet.text} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setMenuVisible(true)}>
-            <MaterialIcons name="more-vert" size={24} color={styleSheet.text.color} />
+            <MaterialIcons name="more-vert" size={24} style={styleSheet.text} />
           </TouchableOpacity>
         </View>
     });
@@ -197,7 +207,7 @@ export default function() {
           </>
         : account.state == -1 ?
           <>
-            <Text style={styleSheet.errorNote}>You have been signed out of this account. Type in the password to sign in again.</Text>
+            <Text style={styleSheet.errorNote}>You have been signed out of this account. Type in the parent password to sign in again.</Text>
             <ReAuthForm uuid={params.uuid}/>
           </>
         :
@@ -205,7 +215,7 @@ export default function() {
             <Text style={styleSheet.text}></Text>
             
             <Text style={styleSheet.label}>Last usage:</Text>
-            <Text style={styleSheet.text}>{secondsToTime(state.usedTime?? 0)} (on {state.usageDate})</Text>
+            <Text style={styleSheet.text}>{secondsToTime(state.usedTime?? 0)} ({tzDateToTimespan(state.usageDate)})</Text>
             <Progress.Bar width={300} progress={usedTimeRatio()} color={styleSheet.tint.color}/>
 
             <Text style={styleSheet.label}>Time limit (today):</Text>
