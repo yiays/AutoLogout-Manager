@@ -45,7 +45,7 @@ type AccountsContextType = {
   pushClientState: (uuid: string, state:Partial<ClientState>, token:string) => Promise<boolean>;
 };
 
-OpenAPI.BASE = 'https://autologout.yiays.com';
+OpenAPI.BASE = __DEV__? 'http://192.168.1.11:8111': 'https://autologout.yiays.com';
 const AccountsContext = createContext<AccountsContextType | undefined>(undefined);
 
 export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

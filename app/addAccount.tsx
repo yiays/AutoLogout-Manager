@@ -102,7 +102,7 @@ export default function() {
     <ScrollView style={styleSheet.view}>
       <View style={styleSheet.container}>
         {
-        !params.uuid?<>
+        !params.uuid && !__DEV__?<>
           <Text style={styleSheet.title}>How to add accounts</Text>
           <Text style={styleSheet.paragraph}>
             Open the control panel in AutoLogout, then click the "Connect to your phone" button.
@@ -119,11 +119,11 @@ export default function() {
           <ExternalLinkButton label={"AutoLogout Releases"} url={"https://autologout.yiays.com/download/"}/>
         </>:<>
           <Text style={styleSheet.label}>Account name:</Text>
-          <TextInput style={styleSheet.textInput} value={name} readOnly={Boolean(params.name)} onChangeText={validateName} textContentType="none" maxLength={50}></TextInput>
+          <TextInput style={styleSheet.textInput} value={name} readOnly={Boolean(params.name)} onChangeText={validateName} textContentType="none" maxLength={50} placeholder="eg. Family PC, John's Laptop"></TextInput>
           { nameError && <Text style={styleSheet.validationNote}>{nameError}</Text> }
 
           <Text style={styleSheet.label}>Account UUID:</Text>
-          <TextInput style={styleSheet.textInput} value={uuid} readOnly={true} onChangeText={validateUuid} textContentType="none" maxLength={37}></TextInput>
+          <TextInput style={styleSheet.textInput} value={uuid} readOnly={!__DEV__} onChangeText={validateUuid} textContentType="none" maxLength={37}></TextInput>
           { uuidError && <Text style={styleSheet.validationNote}>{uuidError}</Text> }
 
           <Text style={styleSheet.label}>Parent password:</Text>
