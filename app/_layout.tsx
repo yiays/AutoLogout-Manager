@@ -8,6 +8,7 @@ import { Drawer, DrawerContentComponentProps, DrawerContentScrollView, DrawerIte
 import { StatusBar } from "expo-status-bar";
 import { Text, View } from "react-native";
 import { Provider } from "react-native-paper";
+import Toast from "react-native-toast-message";
 
 function DrawerContent(props: DrawerContentComponentProps & { activeTintColor: string, inactiveTintColor: string }) {
   const styleSheet = useThemeColor();
@@ -82,6 +83,7 @@ export default function RootLayout() {
           <Drawer.Screen name="addAccount" options={{title: "Add an account"}}/>
         </Drawer>
       </Provider>
+      <Toast/>
     </AccountsProvider>
   );
 }

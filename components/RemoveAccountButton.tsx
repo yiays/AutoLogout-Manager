@@ -1,7 +1,8 @@
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { useAccounts } from "@/providers/AccountsProvider";
 import { useRouter } from "expo-router";
-import { Alert, Button, ToastAndroid } from "react-native";
+import { Alert, Button } from "react-native";
+import Toast from "react-native-toast-message";
 
 // Generic removal handler as a hook
 export function useRemoveAccount(uuid: string, name: string) {
@@ -9,7 +10,11 @@ export function useRemoveAccount(uuid: string, name: string) {
   const { removeClientState } = useAccounts();
 
   const cleanup = () => {
-    ToastAndroid.show("Removed account successfully", 5);
+    Toast.show({
+      type: 'success',
+      text1: "Removed account successfully",
+      visibilityTime: 5
+    });
     router.replace('/');
   };
 

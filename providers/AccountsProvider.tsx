@@ -1,7 +1,7 @@
 import { ApiError, DefaultService, OpenAPI } from "@/api-client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
-import { ToastAndroid } from "react-native";
+import Toast from "react-native-toast-message";
 
 enum NetworkState {
   NetworkError = -2,
@@ -134,15 +134,27 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       if(error instanceof ApiError) {
         if([404, 401].includes(error.status)) {
-          ToastAndroid.show("UUID was removed or unauthorized", 5);
+          Toast.show({
+            type: 'error',
+            text1: "UUID was removed or unauthorized",
+            visibilityTime: 5
+          });
           await setAccountState(uuid, NetworkState.Unauthorized);
         }else{
-          ToastAndroid.show("Unhandled API error", 5);
+          Toast.show({
+            type: 'error',
+            text1: "Unhandled API error",
+            visibilityTime: 5
+          });
           console.error("Unhandled API error:", error.status, error.body);
           await setAccountState(uuid, NetworkState.NetworkError);
         }
       } else {
-        ToastAndroid.show("Network Error", 5);
+        Toast.show({
+          type: 'error',
+          text1:"Network Error",
+          visibilityTime: 5
+        });
         console.error("Failed to fetch client state:", error);
         await setAccountState(uuid, NetworkState.NetworkError);
       }
@@ -166,21 +178,37 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (response.accepted) {
         await saveClientState(uuid, {...states[uuid], ...state, ...response.delta});
         await setAccountState(uuid, NetworkState.Active);
-        ToastAndroid.show("Syncing successful", 3);
+        Toast.show({
+          type: 'success',
+          text1:"Syncing successful",
+          visibilityTime: 3
+        });
         return true;
       }
     } catch (error) {
       if(error instanceof ApiError) {
         if([404, 401].includes(error.status)) {
-          ToastAndroid.show("UUID was removed or unauthorized", 5);
+          Toast.show({
+            type: 'error',
+            text1: "UUID was removed or unauthorized",
+            visibilityTime: 5
+          });
           await setAccountState(uuid, NetworkState.Unauthorized);
         }else{
-          ToastAndroid.show("Unhandled API error", 5);
+          Toast.show({
+            type: 'error',
+            text1: "Unhandled API error",
+            visibilityTime: 5
+          });
           console.error("Unhandled API error:", error.status, error.body);
           await setAccountState(uuid, NetworkState.NetworkError);
         }
       } else {
-        ToastAndroid.show("Network Error", 5);
+        Toast.show({
+          type: 'error',
+          text1:"Network Error",
+          visibilityTime: 5
+        });
         console.error("Failed to push new client state:", error);
         await setAccountState(uuid, NetworkState.NetworkError);
       }
@@ -198,14 +226,22 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const result = await fetchClientState(uuid, response.authKey);
         if(!result) return null; // This should never happen
         setStates(prev => ({ ...prev, [uuid]: result }));
-        ToastAndroid.show("New account added successfully", 5);
+        Toast.show({
+          type: 'success',
+          text1: "New account added successfully",
+          visibilityTime: 5
+        });
         return result;
       }
     } catch (error) {
       if(error instanceof ApiError) {
         return error;
       } else {
-        ToastAndroid.show("Network Error", 5);
+        Toast.show({
+          type: 'error',
+          text1:"Network Error",
+          visibilityTime: 5
+        });
         console.error("Failed to authorize client:", error);
       }
     }
