@@ -1,6 +1,8 @@
-import { ApiError, DefaultService, OpenAPI } from "@/api-client";
+import { ApiError, OpenAPI, TimeLimitApiService } from "@/api-client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import { Platform } from 'react-native';
 import Toast from "react-native-toast-message";
 
 enum NetworkState {
@@ -28,8 +30,9 @@ export type ClientState = {
   usageDate: string;
   bedtime: string;
   waketime: string;
-  graceGiven: boolean;
   syncAuthor?: string | null;
+  clientVersion?: string;
+  clientOS?: string;
 };
 
 type States = {
@@ -39,18 +42,25 @@ type States = {
 type AccountsContextType = {
   accounts: Accounts;
   states: States;
+  latestVersion: string;
   removeClientState: (uuid: string) => Promise<void>;
   authorizeClient: (uuid: string, name: string, password: string) => Promise<ClientState | ApiError | null>;
   fetchClientState: (uuid: string, token: string) => Promise<ClientState | null>;
   pushClientState: (uuid: string, state:Partial<ClientState>, token:string) => Promise<boolean>;
 };
 
-OpenAPI.BASE = __DEV__? 'http://192.168.1.11:8111': 'https://autologout.yiays.com';
+OpenAPI.BASE = __DEV__? 'http://localhost:8111': 'https://autologout.yiays.com';
+OpenAPI.HEADERS = async () => {
+  return {
+    'User-Agent': `AutoLogoutManager/${OpenAPI.VERSION} (AutoLogout-Manager ${Constants.expoConfig?.version}) (${Platform.OS} ${Platform.Version})`
+  }
+}
 const AccountsContext = createContext<AccountsContextType | undefined>(undefined);
 
 export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [accounts, setAccounts] = useState<Accounts>({});
   const [states, setStates] = useState<States>({});
+  const [latestVersion, setLatestVersion] = useState('0.0.0');
   const fetchOnce = useRef(false);
 
   const recentSyncThresholdMet = (): boolean => {
@@ -125,7 +135,7 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const fetchClientState = async(uuid: string, token: string): Promise<ClientState | null> => {
     OpenAPI.TOKEN = token;
     try {
-      const response = await DefaultService.getStateFetch(uuid);
+      const response = await TimeLimitApiService.getStateFetch(uuid);
       if (response) {
         await saveClientState(uuid, response);
         await setAccountState(uuid, NetworkState.Active);
@@ -171,10 +181,19 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }
 
+  const fetchLatestVersion = () => {
+    console.log("Checking latest version of AutoLogout...");
+    TimeLimitApiService.getClientUpdateCheck().then(result =>
+      setLatestVersion(result.version)
+    ).catch(e => {
+      console.error("Update check failed;", e);
+    });
+  }
+
   const pushClientState = async(uuid: string, state:Partial<ClientState>, token:string): Promise<boolean> => {
     OpenAPI.TOKEN = token;
     try {
-      const response = await DefaultService.postStateSync(uuid, true, state);
+      const response = await TimeLimitApiService.postStateSync(uuid, true, state);
       if (response.accepted) {
         await saveClientState(uuid, {...states[uuid], ...state, ...response.delta});
         await setAccountState(uuid, NetworkState.Active);
@@ -219,7 +238,7 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const authorizeClient = async(uuid:string, name:string, password:string): Promise<ClientState | ApiError | null> => {
     OpenAPI.TOKEN = undefined;
     try {
-      const response = await DefaultService.getClientAuthorize(uuid, password);
+      const response = await TimeLimitApiService.getClientAuthorize(uuid, password);
       console.log("Authorize response:", response);
       if(response.success) {
         await addAccount(uuid, name, response.authKey);
@@ -257,13 +276,15 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if(!Object.keys(accounts).length) return; // No accounts yet
     fetchOnce.current = true;
     // Avoid fetching all if they already synced recently
-    if(!recentSyncThresholdMet())
+    if(!recentSyncThresholdMet()) {
       fetchClients();
+      fetchLatestVersion();
+    }
   }, [accounts]);
 
   return (
     <AccountsContext.Provider
-      value={{accounts, states, removeClientState, authorizeClient, fetchClientState, pushClientState}}
+      value={{accounts, states, latestVersion, removeClientState, authorizeClient, fetchClientState, pushClientState}}
     >
       {children}
     </AccountsContext.Provider>

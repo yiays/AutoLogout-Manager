@@ -4,17 +4,12 @@ import RemoveAccountButton, { useRemoveAccount } from "@/components/RemoveAccoun
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { ClientState, useAccounts } from "@/providers/AccountsProvider";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import { Link, useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { Button, RefreshControl, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 import { Menu } from 'react-native-paper';
 import * as Progress from 'react-native-progress';
-
-function minutesToTime(mins: number): string {
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return `${h} hour${h !== 1 ? 's' : ''}, and ${m} minute${m !== 1 ? 's' : ''}`;
-}
+import semver from 'semver';
 
 function secondsToTime(secs: number): string {
   const h = Math.floor(secs / 3600);
@@ -37,10 +32,13 @@ function timestampToRelativeTime(timestamp: number): string {
   const now = Date.now();
   const diff = now - timestamp;
   const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
   
-  if (hours > 0) {
+  if(days > 1) {
+    return `${days} days ago`;
+  } else if (hours > 0) {
     return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
   } else if (minutes > 0) {
     return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
@@ -57,10 +55,12 @@ export default function() {
   const navigation = useNavigation();
   const styleSheet = useThemeColor();
   const params: {uuid: string} = useLocalSearchParams();
-  const {accounts, states, fetchClientState, pushClientState} = useAccounts();
+  const {accounts, states, latestVersion, fetchClientState, pushClientState} = useAccounts();
 
   const account = accounts[params.uuid];
   const state = states[params.uuid];
+
+  const [osName, setOSName] = useState('');
   
   const [todayTimeLimit, setTodayTimeLimit] = useState<{hour:number, minute:number} | false>(false);
   const [dailyTimeLimit, setDailyTimeLimit] = useState<{hour:number, minute:number} | false>(false);
@@ -78,6 +78,13 @@ export default function() {
   const handleRemove = useRemoveAccount(params.uuid, account?.name);
 
   useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      setMenuVisible(false); // Closes menu when navigating away
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  useEffect(() => {
     // Variables which values should be updated when the account changes
     navigation.setOptions({
       title: "Account: " + account?.name,
@@ -86,7 +93,7 @@ export default function() {
           <TouchableOpacity onPress={onRefresh}>
             <MaterialIcons name="refresh" size={24} style={styleSheet.text} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setMenuVisible(true)}>
+          <TouchableOpacity onPress={() => setMenuVisible(visible => !visible)}>
             <MaterialIcons name="more-vert" size={24} style={styleSheet.text} />
           </TouchableOpacity>
         </View>
@@ -96,6 +103,13 @@ export default function() {
   useEffect(() => {
     // Variables which values should be updated when the state changes
     if(state) {
+      if(state.clientOS) {
+        if(/windows/i.test(state.clientOS)) setOSName('Windows');
+        else if(/linux/i.test(state.clientOS)) setOSName('Linux');
+        else if(/mac/i.test(state.clientOS)) setOSName('Mac OS');
+        else setOSName('');
+      }
+
       if(state.todayTimeLimit >= 0) {
         const safeHour = clamp(Math.floor(state.todayTimeLimit / 3600), 0, 23);
         const safeMinute = clamp(Math.ceil(state.todayTimeLimit / 60 % 60 / 5) * 5, 0, 55);
@@ -186,7 +200,7 @@ export default function() {
   }>
     <View style={styleSheet.menuContainer}>
       <Menu visible={menuVisible} onDismiss={() => setMenuVisible(false)} anchor={<View style={styleSheet.menuAnchor}/>}>
-        <Menu.Item title="Remove account" onPress={() => handleRemove()}/>
+        <Menu.Item title="Remove account" onPress={() => {setMenuVisible(false); handleRemove()}}/>
       </Menu>
     </View>
     <View style={styleSheet.container}>
@@ -195,9 +209,20 @@ export default function() {
         <Text style={styleSheet.text}>Loading...</Text>
       :
       <>
+        {
+        semver.gt(latestVersion, state.clientVersion??'0.0.0')?
+          <>
+            <View style={{...styleSheet.panel, ...styleSheet.warningBg}}>
+              <Text style={styleSheet.darkBgText}>AutoLogout is out of date on this computer!</Text>
+              <Link style={styleSheet.darkBgLink} href={"https://autologout.yiays.com/download/#stable"}>Learn how to update</Link>
+            </View>
+          </>
+          :
+          <></>
+        }
         <MaterialIcons name="computer" size={128} color={styleSheet.tint.color} style={{marginTop: -24}}/>
         <Text style={styleSheet.title}>{account.name}</Text>
-        <Text style={styleSheet.subtitle}>{params.uuid}</Text>
+        <Text style={styleSheet.subtitle}>AutoLogout v{state.clientVersion} {osName? 'on '+osName: ''}</Text>
         <Text style={{...styleSheet.plainSubtitle, marginTop:0}}>Last sync: {lastSync}</Text>
         {
         account.state == -2 ?

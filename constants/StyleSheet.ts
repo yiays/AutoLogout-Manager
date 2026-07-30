@@ -12,6 +12,20 @@ export function baseStyles(theme: 'light'|'dark') {
     container: {
       padding: 30,
     },
+    panel: {
+      margin: -30,
+      padding: 30,
+      marginBottom: 30,
+    },
+    warningBg: {
+      backgroundColor: Colors[theme].warning,
+    },
+    darkBgText: {
+      color: Colors['dark'].text,
+    },
+    darkBgLink: {
+      color: '#d6e6fe',
+    },
     row: {
       flexDirection: 'row',
       alignItems: 'center',

@@ -5,7 +5,7 @@
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
-export class DefaultService {
+export class TimeLimitApiService {
     /**
      * Get a client's state by uuid
      * @param uuid Target client UUID
@@ -22,8 +22,9 @@ export class DefaultService {
         usageDate: string;
         bedtime: string;
         waketime: string;
-        graceGiven: boolean;
         syncAuthor?: string | null;
+        clientVersion?: string;
+        clientOS?: string;
     }> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -108,8 +109,9 @@ export class DefaultService {
             usageDate?: string;
             bedtime?: string;
             waketime?: string;
-            graceGiven?: boolean;
             syncAuthor?: string | null;
+            clientVersion?: string;
+            clientOS?: string;
         },
     ): CancelablePromise<{
         accepted: boolean;
@@ -121,8 +123,9 @@ export class DefaultService {
             usageDate?: string;
             bedtime?: string;
             waketime?: string;
-            graceGiven?: boolean;
             syncAuthor?: string | null;
+            clientVersion?: string;
+            clientOS?: string;
         };
     }> {
         return __request(OpenAPI, {
@@ -139,6 +142,19 @@ export class DefaultService {
             errors: {
                 401: `Unauthorized`,
             },
+        });
+    }
+    /**
+     * Provide information about the latest release
+     * @returns any Returns the latest version number
+     * @throws ApiError
+     */
+    public static getClientUpdateCheck(): CancelablePromise<{
+        version: string;
+    }> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/update',
         });
     }
 }
