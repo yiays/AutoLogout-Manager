@@ -1,4 +1,3 @@
-import { ApiError } from "@/api-client";
 import ExternalLinkButton from "@/components/ExternalLinkButton";
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { useAccounts } from "@/providers/AccountsProvider";
@@ -83,10 +82,10 @@ export default function() {
     }
 
     const result = await authorizeClient(uuid, name, password);
-    if (result instanceof ApiError) {
-      if(result.status == 401)
+    if (Number.isFinite(result)) {
+      if(result == 401)
         setSubmitError("Incorrect password. Make sure you entered the password you set when opening AutoLogout on this account.");
-      else if(result.status == 404)
+      else if(result == 404)
         setSubmitError("Account not found. Make sure the computer is online. You may need to click 'Connect to your phone' again.");
       else
         setSubmitError("Server error. Please try again later.");

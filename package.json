@@ -4,7 +4,7 @@
   "version": "0.0.4",
   "scripts": {
     "start": "expo start",
-    "openapi-codegen": "openapi --input http://localhost:8111/openapi.json --output ./api-client --client fetch",
+    "openapi-codegen": "openapi-ts",
     "android": "expo run:android",
     "build-android": "cd android & gradlew app:bundleRelease",
     "ios": "expo run:ios",
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
+    "@hey-api/client-fetch": "^0.13.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "^57.0.8",
     "expo-blur": "~57.0.2",
@@ -47,11 +48,11 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@hey-api/openapi-ts": "^0.99.0",
     "@types/react": "~19.2.10",
     "@types/semver": "^7.7.1",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~57.0.0",
-    "openapi-typescript-codegen": "^0.29.0",
     "typescript": "~6.0.3"
   },
   "private": true

@@ -1,4 +1,5 @@
-import { ApiError, OpenAPI, TimeLimitApiService } from "@/api-client";
+import * as TimeLimitApi from "@/src/client";
+import { client } from '@/src/client/client.gen';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
@@ -44,17 +45,28 @@ type AccountsContextType = {
   states: States;
   latestVersion: string;
   removeClientState: (uuid: string) => Promise<void>;
-  authorizeClient: (uuid: string, name: string, password: string) => Promise<ClientState | ApiError | null>;
+  authorizeClient: (uuid: string, name: string, password: string) => Promise<ClientState | number | null>;
   fetchClientState: (uuid: string, token: string) => Promise<ClientState | null>;
   pushClientState: (uuid: string, state:Partial<ClientState>, token:string) => Promise<boolean>;
 };
 
-OpenAPI.BASE = __DEV__? 'http://localhost:8111': 'https://autologout.yiays.com';
-OpenAPI.HEADERS = async () => {
-  return {
-    'User-Agent': `AutoLogoutManager/${OpenAPI.VERSION} (AutoLogout-Manager ${Constants.expoConfig?.version}) (${Platform.OS} ${Platform.Version})`
+client.setConfig({
+  baseUrl: (__DEV__? 'http://asriel-surface:8111': 'https://autologout.yiays.com'),
+  headers: {
+    'User-Agent': `AutoLogoutManager/${client} (AutoLogout-Manager ${Constants.expoConfig?.version}) (${Platform.OS} ${Platform.Version})`,
   }
-}
+});
+
+/*client.interceptors.request.use((request) => {
+  // Enforce a 5-second timeout (5000ms)
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), 5000);
+
+  return new Request(request, {
+    signal: controller.signal
+  });
+});*/
+
 const AccountsContext = createContext<AccountsContextType | undefined>(undefined);
 
 export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -131,43 +143,47 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   }
 
+  async function handleApiErrors (uuid:string, status?:number, error?:string) {
+    if([404, 401].includes(status?? 0)) {
+      Toast.show({
+        type: 'error',
+        text1: `${accounts[uuid].name}: You've been signed out`,
+        visibilityTime: 5
+      });
+      await setAccountState(uuid, NetworkState.Unauthorized);
+    }else{
+      Toast.show({
+        type: 'error',
+        text1: `${accounts[uuid].name}: Unhandled API error, is this app up to date?`,
+        visibilityTime: 5
+      });
+      console.error("Unhandled API error:", error);
+      await setAccountState(uuid, NetworkState.NetworkError);
+    }
+  }
+
   // Fetch state from server and save locally
   const fetchClientState = async(uuid: string, token: string): Promise<ClientState | null> => {
-    OpenAPI.TOKEN = token;
     try {
-      const response = await TimeLimitApiService.getStateFetch(uuid);
-      if (response) {
-        await saveClientState(uuid, response);
+      const result = await TimeLimitApi.getStateFetch({
+        path: {uuid},
+        headers: {'Authorization': `Bearer ${token}`}
+      });
+      if (result.data) {
+        await saveClientState(uuid, result.data);
         await setAccountState(uuid, NetworkState.Active);
-        return response;
+        return result.data;
+      } else {
+        handleApiErrors(uuid, result.response?.status, result.error.error)
       }
     } catch (error) {
-      if(error instanceof ApiError) {
-        if([404, 401].includes(error.status)) {
-          Toast.show({
-            type: 'error',
-            text1: "UUID was removed or unauthorized",
-            visibilityTime: 5
-          });
-          await setAccountState(uuid, NetworkState.Unauthorized);
-        }else{
-          Toast.show({
-            type: 'error',
-            text1: "Unhandled API error",
-            visibilityTime: 5
-          });
-          console.error("Unhandled API error:", error.status, error.body);
-          await setAccountState(uuid, NetworkState.NetworkError);
-        }
-      } else {
-        Toast.show({
-          type: 'error',
-          text1:"Network Error",
-          visibilityTime: 5
-        });
-        console.error("Failed to fetch client state:", error);
-        await setAccountState(uuid, NetworkState.NetworkError);
-      }
+      Toast.show({
+        type: 'error',
+        text1:`${accounts[uuid].name}: Network Error`,
+        visibilityTime: 5
+      });
+      console.error("Failed to fetch client state:", error);
+      await setAccountState(uuid, NetworkState.NetworkError);
     }
     return null;
   }
@@ -183,86 +199,77 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const fetchLatestVersion = () => {
     console.log("Checking latest version of AutoLogout...");
-    TimeLimitApiService.getClientUpdateCheck().then(result =>
-      setLatestVersion(result.version)
-    ).catch(e => {
+    TimeLimitApi.getClientUpdateCheck().then(result => {
+      if(result.data) {
+        setLatestVersion(result.data.version);
+        console.log("Latest version of AutoLogout is", result.data.version)
+      }
+      else console.error("Update check failed;", result.error);
+    }).catch(e => {
       console.error("Update check failed;", e);
     });
   }
 
   const pushClientState = async(uuid: string, state:Partial<ClientState>, token:string): Promise<boolean> => {
-    OpenAPI.TOKEN = token;
     try {
-      const response = await TimeLimitApiService.postStateSync(uuid, true, state);
-      if (response.accepted) {
-        await saveClientState(uuid, {...states[uuid], ...state, ...response.delta});
-        await setAccountState(uuid, NetworkState.Active);
-        Toast.show({
-          type: 'success',
-          text1:"Syncing successful",
-          visibilityTime: 3
-        });
-        return true;
+      const result = await TimeLimitApi.postStateSync({
+        path: {uuid},
+        query: {parentMode: true},
+        body: state
+      });
+      if(result.data) {
+        if (result.data.accepted) {
+          await saveClientState(uuid, {...states[uuid], ...state, ...result.data.delta});
+          await setAccountState(uuid, NetworkState.Active);
+          Toast.show({
+            type: 'success',
+            text1:`${accounts[uuid].name}: Syncing successful`,
+            visibilityTime: 3
+          });
+          return true;
+        }
+      }else{
+        handleApiErrors(uuid, result.response?.status, result.error.error)
       }
     } catch (error) {
-      if(error instanceof ApiError) {
-        if([404, 401].includes(error.status)) {
-          Toast.show({
-            type: 'error',
-            text1: "UUID was removed or unauthorized",
-            visibilityTime: 5
-          });
-          await setAccountState(uuid, NetworkState.Unauthorized);
-        }else{
-          Toast.show({
-            type: 'error',
-            text1: "Unhandled API error",
-            visibilityTime: 5
-          });
-          console.error("Unhandled API error:", error.status, error.body);
-          await setAccountState(uuid, NetworkState.NetworkError);
-        }
-      } else {
-        Toast.show({
-          type: 'error',
-          text1:"Network Error",
-          visibilityTime: 5
-        });
-        console.error("Failed to push new client state:", error);
-        await setAccountState(uuid, NetworkState.NetworkError);
-      }
+      Toast.show({
+        type: 'error',
+        text1:`${accounts[uuid].name}: Network Error`,
+        visibilityTime: 5
+      });
+      console.error("Failed to push new client state:", error);
+      await setAccountState(uuid, NetworkState.NetworkError);
     }
     return false;
   }
 
-  const authorizeClient = async(uuid:string, name:string, password:string): Promise<ClientState | ApiError | null> => {
-    OpenAPI.TOKEN = undefined;
+  const authorizeClient = async(uuid:string, name:string, password:string): Promise<ClientState | number | null> => {
     try {
-      const response = await TimeLimitApiService.getClientAuthorize(uuid, password);
-      console.log("Authorize response:", response);
-      if(response.success) {
-        await addAccount(uuid, name, response.authKey);
-        const result = await fetchClientState(uuid, response.authKey);
-        if(!result) return null; // This should never happen
-        setStates(prev => ({ ...prev, [uuid]: result }));
+      const result = await TimeLimitApi.getClientAuthorize({
+        path: {uuid},
+        query: {password}
+      });
+      if(result.data?.success) {
+        await addAccount(uuid, name, result.data.authKey);
+        const newClient = await fetchClientState(uuid, result.data.authKey);
+        if(!newClient) return null; // This should never happen
+        setStates(prev => ({ ...prev, [uuid]: newClient }));
         Toast.show({
           type: 'success',
           text1: "New account added successfully",
           visibilityTime: 5
         });
-        return result;
+        return newClient;
+      }else{
+        return result.response?.status?? null;
       }
     } catch (error) {
-      if(error instanceof ApiError) {
-        return error;
-      } else {
-        Toast.show({
-          type: 'error',
-          text1:"Network Error",
-          visibilityTime: 5
-        });
-        console.error("Failed to authorize client:", error);
-      }
+      Toast.show({
+        type: 'error',
+        text1: "Network Error",
+        visibilityTime: 5
+      });
+      console.error("Failed to authorize client:", error);
     }
     return null;
   }
@@ -270,15 +277,15 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     loadAccounts(true);
   }, []);
-
+  
   useEffect(() => {
     if(fetchOnce.current) return; // Prevent fetching multiple times
     if(!Object.keys(accounts).length) return; // No accounts yet
+    if(latestVersion == '0.0.0') fetchLatestVersion();
     fetchOnce.current = true;
     // Avoid fetching all if they already synced recently
     if(!recentSyncThresholdMet()) {
       fetchClients();
-      fetchLatestVersion();
     }
   }, [accounts]);
 
