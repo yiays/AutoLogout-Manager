@@ -1,13 +1,13 @@
-import { HourMinutePicker } from "@/components/HourMinutePicker";
 import ReAuthForm from "@/components/ReAuthForm";
 import RemoveAccountButton, { useRemoveAccount } from "@/components/RemoveAccountButton";
+import { HourMinutePicker, TimeRangePicker } from "@/components/TimePickers";
 import { tzDateToDaysAgo } from "@/constants/timezoneDate";
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { ClientState, useAccounts } from "@/providers/AccountsProvider";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Link, useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
-import { Button, RefreshControl, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
+import { Button, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { Menu } from 'react-native-paper';
 import * as Progress from 'react-native-progress';
 import semver from 'semver';
@@ -246,49 +246,35 @@ export default function() {
             <Text style={styleSheet.text}>{secondsToTime(state.usedTime?? 0)} ({tzDateToDaysAgo(state.usageDate)})</Text>
             <Progress.Bar width={300} progress={usedTimeRatio()} color={styleSheet.tint.color}/>
 
-            <Text style={styleSheet.label}>Time limit (today):</Text>
-            <HourMinutePicker
-              value={typeof todayTimeLimit == 'object'? todayTimeLimit: {hour:0, minute:0}}
-              onChange={setTodayTimeLimit}
-              enabled={todayTimeLimit !== false}
-              onEnableChange={(val) => setTodayTimeLimit(val? {hour:2, minute:0}: false)}
-              zIndex={1004}
-            />
+            <View style={styleSheet.controlPanel}>
+              <HourMinutePicker
+                title="Today's Time Limit"
+                value={typeof todayTimeLimit == 'object'? todayTimeLimit: {hour:0, minute:0}}
+                onChange={setTodayTimeLimit}
+                enabled={todayTimeLimit !== false}
+                onEnableChange={(val) => setTodayTimeLimit(val? {hour:2, minute:0}: false)}
+                zIndex={1004}
+              />
 
-            <Text style={styleSheet.label}>Time limit (daily):</Text>
-            <HourMinutePicker
-              value={typeof dailyTimeLimit == 'object'? dailyTimeLimit: {hour:0, minute:0}}
-              onChange={setDailyTimeLimit}
-              enabled={dailyTimeLimit !== false}
-              onEnableChange={(val) => setDailyTimeLimit(val? {hour:2, minute:0}: false)}
-              zIndex={1003}
-            />
+              <HourMinutePicker
+                title="Daily Time Limit"
+                value={typeof dailyTimeLimit == 'object'? dailyTimeLimit: {hour:0, minute:0}}
+                onChange={setDailyTimeLimit}
+                enabled={dailyTimeLimit !== false}
+                onEnableChange={(val) => setDailyTimeLimit(val? {hour:2, minute:0}: false)}
+                zIndex={1003}
+              />
 
-            <Text style={styleSheet.label}>Downtime:</Text>
-            <View style={{...styleSheet.row, marginTop: 8}}>
-              <Switch value={bedTime !== false} onValueChange={downtimeToggle}/>
-              <Text style={{...styleSheet.text, marginHorizontal:4}}>{bedTime !== false ? "Enabled" : "Disabled"}</Text>
+              <TimeRangePicker
+                title="Downtime"
+                value={{start:(typeof wakeTime == 'object'? wakeTime: {hour:0, minute:0}), end:(typeof bedTime == 'object'? bedTime: {hour:0, minute:0})}}
+                onStartChange={setWakeTime}
+                onEndChange={setBedTime}
+                enabled={wakeTime !== false}
+                onEnableChange={downtimeToggle}
+                zIndex={1004}
+              />
             </View>
-            { wakeTime !== false ?
-              <>
-                <View style={{...styleSheet.row, zIndex:1002}}>
-                  <Text style={{...styleSheet.text, marginRight: 4}}>From</Text>
-                  <HourMinutePicker
-                    value={typeof wakeTime == 'object'? wakeTime: {hour:0, minute:0}}
-                    onChange={setWakeTime}
-                  />
-                </View>
-                <View style={{...styleSheet.row, zIndex:1001}}>
-                  <Text style={{...styleSheet.text, marginRight: 4}}>Until</Text>
-                  <HourMinutePicker
-                    value={typeof bedTime == 'object'? bedTime: {hour:0, minute:0}}
-                    onChange={setBedTime}
-                  />
-                </View>
-              </>
-            :
-              <Text style={styleSheet.paragraph}>No restrictions</Text>
-            }
 
             {syncCompare() &&
               <Button title={"Push new settings to device"} onPress={handleSync}/>

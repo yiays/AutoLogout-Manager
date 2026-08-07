@@ -17,8 +17,37 @@ export function baseStyles(theme: 'light'|'dark') {
       padding: 30,
       marginBottom: 30,
     },
+    controlPanel: {
+      flex: 1,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginVertical: 16,
+    },
+    controlPanelPane: {
+      width: 180,
+      height: 180,
+      padding: 10,
+      backgroundColor: Colors[theme].background2,
+      borderRadius: 16,
+    },
+    controlPanelHeader: {
+      color: Colors[theme].text,
+      fontSize: 11,
+      textTransform: 'uppercase',
+      fontWeight: 'bold',
+      marginBottom: 8,
+    },
+    controlPanelSwitch: {
+      position: 'absolute',
+      top: 6,
+      right: 6,
+    },
     warningBg: {
       backgroundColor: Colors[theme].warning,
+    },
+    activeBg: {
+      backgroundColor: Colors[theme].tint,
     },
     darkBgText: {
       color: Colors['dark'].text,
