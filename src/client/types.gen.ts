@@ -43,6 +43,17 @@ export type GetStateFetchResponses = {
         todayTimeLimit: number;
         usedTime?: number;
         usageDate: string;
+        usage?: {
+            [key: string]: {
+                totalUsage?: number;
+                entries?: {
+                    [key: string]: {
+                        names: Array<string>;
+                        usedTime: number;
+                    };
+                };
+            };
+        };
         bedtime: string;
         waketime: string;
         syncAuthor?: string | null;
@@ -150,6 +161,17 @@ export type PostStateSyncData = {
         todayTimeLimit?: number;
         usedTime?: number;
         usageDate?: string;
+        usage?: {
+            [key: string]: {
+                totalUsage?: number;
+                entries?: {
+                    [key: string]: {
+                        names: Array<string>;
+                        usedTime: number;
+                    };
+                };
+            };
+        };
         bedtime?: string;
         waketime?: string;
         syncAuthor?: string | null;
@@ -195,6 +217,17 @@ export type PostStateSyncResponses = {
             todayTimeLimit?: number;
             usedTime?: number;
             usageDate?: string;
+            usage?: {
+                [key: string]: {
+                    totalUsage?: number;
+                    entries?: {
+                        [key: string]: {
+                            names: Array<string>;
+                            usedTime: number;
+                        };
+                    };
+                };
+            };
             bedtime?: string;
             waketime?: string;
             syncAuthor?: string | null;
