@@ -1,3 +1,4 @@
+import { tzDateIsToday } from "@/constants/timezoneDate";
 import * as TimeLimitApi from "@/src/client";
 import { client } from '@/src/client/client.gen';
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -29,6 +30,17 @@ export type ClientState = {
   todayTimeLimit: number;
   usedTime?: number;
   usageDate: string;
+  usage?: {
+      [key: string]: {
+          totalUsage?: number;
+          entries?: {
+              [key: string]: {
+                  names: Array<string>;
+                  usedTime: number;
+              };
+          };
+      };
+  };
   bedtime: string;
   waketime: string;
   syncAuthor?: string | null;
@@ -123,6 +135,9 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const value = await AsyncStorage.getItem('uuid-'+uuid);
     const state: ClientState | null = value? JSON.parse(value): null;
     if(state) {
+      // Discard todayTimeLimit if the day is over
+      if(!tzDateIsToday(state.usageDate))
+        state.todayTimeLimit = state.dailyTimeLimit;
       setStates(prev => ({ ...prev, [uuid]: state }));
       return state;
     }
@@ -170,6 +185,9 @@ export const AccountsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         headers: {'Authorization': `Bearer ${token}`}
       });
       if (result.data) {
+        // Discard todayTimeLimit if the day is over
+        if(!tzDateIsToday(result.data.usageDate))
+          result.data.todayTimeLimit = result.data.dailyTimeLimit;
         await saveClientState(uuid, result.data);
         await setAccountState(uuid, NetworkState.Active);
         return result.data;

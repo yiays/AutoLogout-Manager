@@ -1,6 +1,7 @@
 import { HourMinutePicker } from "@/components/HourMinutePicker";
 import ReAuthForm from "@/components/ReAuthForm";
 import RemoveAccountButton, { useRemoveAccount } from "@/components/RemoveAccountButton";
+import { tzDateToDaysAgo } from "@/constants/timezoneDate";
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { ClientState, useAccounts } from "@/providers/AccountsProvider";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -16,16 +17,6 @@ function secondsToTime(secs: number): string {
   const m = Math.floor((secs / 60) % 60);
   const s = secs % 60;
   return `${h} hour${h !== 1 ? 's' : ''}, ${m} minute${m !== 1 ? 's' : ''}, and ${s} second${s != 1? 's': ''}`;
-}
-
-function tzDateToTimespan(tzdate: string): string {
-  // tzdate is either in format 'yyyy-MM-dd' or 'yyyy-MM-dd ∓hh:mm'
-  const date = Date.parse(tzdate.replace(' ', 'T00:00:00'));
-  // Find the number of days since this usage
-  const ddiff = Math.floor((Date.now() - date) / (1000 * 60 * 60 * 24));
-  if(ddiff <= 0) return "today";
-  if(ddiff == 1) return "yesterday";
-  else return `${ddiff} days ago`;
 }
 
 function timestampToRelativeTime(timestamp: number): string {
@@ -172,6 +163,15 @@ export default function() {
     return clamp(usedTime / totalTime, 0, 1);
   }
 
+  function partialStateFromClientState() : Partial<ClientState> {
+    return {
+      dailyTimeLimit: state.dailyTimeLimit,
+      todayTimeLimit: state.todayTimeLimit,
+      bedtime: state.bedtime,
+      waketime: state.waketime
+    }
+  }
+
   function newStateToClientState() : Partial<ClientState> {
     return {
       dailyTimeLimit: dailyTimeLimit? dailyTimeLimit.hour * 3600 + dailyTimeLimit.minute * 60: -1,
@@ -182,8 +182,11 @@ export default function() {
   }
 
   function syncCompare(): boolean {
-    const a = JSON.stringify({...state, ...newStateToClientState()});
-    const b = JSON.stringify(state);
+    /** 
+     * Returns true if the state doesn't match the synced state 
+     */
+    const a = JSON.stringify(newStateToClientState());
+    const b = JSON.stringify(partialStateFromClientState());
     // if(a!=b) console.log('\n', a, '\n', b);
     return a != b;
   }
@@ -240,7 +243,7 @@ export default function() {
             <Text style={styleSheet.text}></Text>
             
             <Text style={styleSheet.label}>Last usage:</Text>
-            <Text style={styleSheet.text}>{secondsToTime(state.usedTime?? 0)} ({tzDateToTimespan(state.usageDate)})</Text>
+            <Text style={styleSheet.text}>{secondsToTime(state.usedTime?? 0)} ({tzDateToDaysAgo(state.usageDate)})</Text>
             <Progress.Bar width={300} progress={usedTimeRatio()} color={styleSheet.tint.color}/>
 
             <Text style={styleSheet.label}>Time limit (today):</Text>
