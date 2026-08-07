@@ -14,6 +14,7 @@ export default function Index() {
         <Image
           style={{...styleSheet.spanImage, aspectRatio:2.048, marginTop: -12}}
           source={require('@/assets/images/feature-graphic.png')}
+          contentFit="contain"
         />
         <Text style={styleSheet.title}>Welcome to AutoLogout Manager</Text>
         <Text style={styleSheet.paragraph}>

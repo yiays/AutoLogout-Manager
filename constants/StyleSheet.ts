@@ -70,7 +70,6 @@ export function baseStyles(theme: 'light'|'dark') {
     spanImage: {
       width: '100%',
       maxHeight: 500,
-      resizeMode: 'contain',
     },
     paragraph: {
       color: Colors[theme].text,
