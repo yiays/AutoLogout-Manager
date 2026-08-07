@@ -1,7 +1,7 @@
 import { useThemeColor } from "@/hooks/useThemeStyle";
 import { useAccounts } from "@/providers/AccountsProvider";
 import { useRouter } from "expo-router";
-import { Alert, Button } from "react-native";
+import { Alert, Button, Platform } from "react-native";
 import Toast from "react-native-toast-message";
 
 // Generic removal handler as a hook
@@ -19,6 +19,11 @@ export function useRemoveAccount(uuid: string, name: string) {
   };
 
   const handleRemove = async () => {
+    // Workaround for web view
+    if(Platform.OS === 'web') {
+      await removeClientState(uuid).then(cleanup);
+      return;
+    }
     Alert.alert(
       "Remove account " + name,
       `Are you sure you want to remove '${name}' from this device? '${name}' will continue to work with any other connected devices.`,
